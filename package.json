@@ -2,7 +2,7 @@
   "name": "dialog-system",
   "module": "src/index.ts",
   "description": "Dialog system used for games. Popup menus, npc dialogs, etc...",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "keywords": [
     "bun",
     "bunjs",
