@@ -1,10 +1,10 @@
-# bun-template
+# dialog-system
 
-[![npm version](https://badge.fury.io/js/bun-template.svg)](https://www.npmjs.com/package/bun-template)
+[![npm version](https://badge.fury.io/js/dialog-system.svg)](https://www.npmjs.com/package/dialog-system)
 
 Bun template for creating projects using bunjs
 
-![](https://jacklehamster.github.io/bun-template/icon.png)
+![](https://jacklehamster.github.io/dialog-system/icon.png)
 ## Install bun
 
 https://bun.sh/
@@ -20,8 +20,8 @@ curl -fsSL https://bun.sh/install | bash
 
 ## Run example
 
-[https://jacklehamster.github.io/bun-template/example/](https://jacklehamster.github.io/bun-template/example/)
+[https://jacklehamster.github.io/dialog-system/example/](https://jacklehamster.github.io/dialog-system/example/)
 
 ## Github Source
 
-[https://github.com/jacklehamster/bun-template/](https://github.com/jacklehamster/bun-template/)
+[https://github.com/jacklehamster/dialog-system/](https://github.com/jacklehamster/dialog-system/)

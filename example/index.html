@@ -1,13 +1,81 @@
 <html>
   <head>
-    <title>Bun Template</title>
+    <title>Dialog System</title>
+    <link href="font/retro.ttf" rel="stylesheet" />
   </head>
+  <style>
+    body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Retro Gaming', sans-serif;
+    }
+  </style>
   <body>
-  </body>
+    <button onclick="popupControl.onAction()">Action</button>
+    <button onclick="popupControl.onUp()">Up</button>
+    <button onclick="popupControl.onDown()">Down</button>
+    <button id="start-over" onclick="startDialog()">Start over</button>
+    <div id="root"></div>
+    </body>
   <script type="module">
-    import { Hello } from './dist/index.js';
-
-    const h1 = document.body.appendChild(document.createElement("h1"));
-    h1.textContent = Hello.hello();
+    import { attachPopup, MenuItemBehavior } from './dist/index.js';
+    const { popupManager, popupControl } = attachPopup(document.getElementById("root"));
+    window.popupControl = popupControl;
+    window.MenuItemBehavior = MenuItemBehavior;
+    window.startDialog = () => {
+      document.getElementById('start-over').disabled = true;
+      setTimeout(async () => {
+        await popupManager.openDialog({
+            conversation: {
+              messages: [
+                { text: "Hello there." },
+                {
+                  text: "How are you?",
+                  action: ui => ui.openMenu({
+                    position: [400, 340],
+                    size: [undefined, 150],
+                    positionFromRight: true,
+                    items: [
+                      {
+                        label: "I don't know",
+                        behavior: MenuItemBehavior.NONE,
+                        action: [
+                          ui => ui.openDialog({
+                            position: [100, 100],
+                            size: [300, 200],
+                            conversation: {
+                              messages: [
+                                { text: "You should know!" },
+                              ],
+                            },
+                          }),
+                        ],
+                      },
+                      {
+                        label: "good",
+                        action: ui => ui.openDialog({
+                          conversation: {
+                            messages: [
+                              { text: "That's nice to know!" },
+                            ],
+                          },
+                        }),
+                      },
+                      {
+                        label: "bad",
+                      },
+                    ],
+                  }),
+                },
+                { text: "Bye bye." },
+              ]
+            },
+          });
+          document.getElementById('start-over').disabled = false;
+      }, 100);
+    };
+    window.startDialog();
   </script>
 </html>

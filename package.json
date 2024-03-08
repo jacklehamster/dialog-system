@@ -1,8 +1,8 @@
 {
-  "name": "bun-template",
+  "name": "dialog-system",
   "module": "src/index.ts",
-  "description": "Bun template for creating projects using bunjs",
-  "version": "1.0.47",
+  "description": "Dialog system used for games. Popup menus, npc dialogs, etc...",
+  "version": "1.0.0",
   "keywords": [
     "bun",
     "bunjs",
@@ -15,9 +15,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:jacklehamster/bun-template.git"
+    "url": "https://github.com/jacklehamster/dialog-system.git"
   },
-  "homepage": "https://jacklehamster.github.io/bun-template/",
+  "homepage": "<fill in homepage>",
   "author": {
     "name": "Jack Le Hamster",
     "email": "jacklehamster@gmail.com"
@@ -57,9 +57,15 @@
     "prettier": "^3.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@types/react-dom": "^18.2.21",
+    "@types/uuid": "^9.0.8"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "abstract-list": "^1.0.13",
+    "uuid": "^9.0.1"
   }
 }
