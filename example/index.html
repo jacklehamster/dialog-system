@@ -82,7 +82,7 @@
                     },
                     {
                       label: "----",
-                      behavior: MenuItemBehavior.NONE,
+                      disabled: true,
                     },
                     {
                       label: "bye",
@@ -111,9 +111,11 @@
       isKeyDown = true;
       switch(e.code) {
         case "KeyS":
+        case "ArrowDown":
           popupControl.onDown();
           break;
         case "KeyW":
+        case "ArrowUp":
           popupControl.onUp();
           break;
         case "Space":

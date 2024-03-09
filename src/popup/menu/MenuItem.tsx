@@ -5,4 +5,5 @@ export interface MenuItem {
   label: string;
   action?: PopAction | (PopAction | undefined)[];
   behavior?: MenuItemBehavior;
+  disabled?: boolean;
 }

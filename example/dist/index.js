@@ -224,8 +224,12 @@ var useSelection = function({ menuData }) {
 var useMenu = function({ menuData, ui, onDone }) {
   const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
   const { performActions } = useActions({ ui });
+  const [menuHoverEnabled, setMenuHoverEnabled] = import_react9.useState(false);
   const listener = import_react9.useMemo(() => ({
     onAction() {
+      if (selectedItem?.disabled) {
+        return;
+      }
       const behavior = selectedItem?.behavior ?? MenuItemBehavior.CLOSE_ON_SELECT;
       if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
         ui.closePopup(menuData.uid);
@@ -242,17 +246,32 @@ var useMenu = function({ menuData, ui, onDone }) {
       });
     },
     onUp() {
+      setMenuHoverEnabled(false);
       moveSelection(-1);
     },
     onDown() {
+      setMenuHoverEnabled(false);
       moveSelection(1);
     }
-  }), [moveSelection, selectedItem, performActions]);
+  }), [menuData, moveSelection, selectedItem, performActions, setMenuHoverEnabled]);
   const { lockState } = useControlsLock({ uid: menuData.uid, listener });
-  return { selectedItem, select, scroll, scrollUp, scrollDown, disabled: lockState === LockStatus.LOCKED };
+  const enableMenuHover = import_react9.useCallback(!menuHoverEnabled ? () => {
+    setMenuHoverEnabled(true);
+  } : () => {
+  }, [menuHoverEnabled]);
+  return {
+    selectedItem,
+    select,
+    scroll,
+    scrollUp,
+    scrollDown,
+    disabled: lockState === LockStatus.LOCKED,
+    menuHoverEnabled,
+    enableMenuHover
+  };
 };
 var Menu = function({ menuData, ui, onDone }) {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled } = useMenu({ menuData, ui, onDone });
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover } = useMenu({ menuData, ui, onDone });
   const position = [
     menuData?.position?.[0] ?? 50,
     menuData?.position?.[1] ?? 50
@@ -289,7 +308,10 @@ var Menu = function({ menuData, ui, onDone }) {
         }, undefined, false, undefined, this)
       }, undefined, false, undefined, this),
       jsx_dev_runtime4.jsxDEV("div", {
-        style: { paddingTop: 10 },
+        style: {
+          paddingTop: 10,
+          cursor: menuHoverEnabled ? "inherit" : "auto"
+        },
         children: jsx_dev_runtime4.jsxDEV("div", {
           style: { height: `calc(100% - 27px)`, overflow: "hidden" },
           children: jsx_dev_runtime4.jsxDEV("div", {
@@ -297,13 +319,14 @@ var Menu = function({ menuData, ui, onDone }) {
             children: z(menuData.items, (item, index) => {
               const style = {
                 color: selectedItem === item ? "black" : "white",
-                backgroundColor: selectedItem === item ? "white" : "black"
+                backgroundColor: selectedItem === item ? "white" : "black",
+                cursor: !item?.disabled ? "inherit" : "auto"
               };
               return jsx_dev_runtime4.jsxDEV("div", {
                 style,
-                onMouseOver: () => select(index),
-                onDrag: (e) => console.log(e.clientX),
-                onClick: () => popupControl.onAction(),
+                onMouseMove: enableMenuHover,
+                onMouseOver: menuHoverEnabled ? () => select(index) : undefined,
+                onClick: menuHoverEnabled && !item?.disabled ? () => popupControl.onAction() : undefined,
                 children: item?.label
               }, index, false, undefined, this);
             })

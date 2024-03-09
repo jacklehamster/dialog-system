@@ -1,9 +1,9 @@
-import { forEach, map } from 'abstract-list';
+import { map } from 'abstract-list';
 import { Popup } from '../base/Popup';
 import { MenuData } from './MenuData';
 import { UserInterface } from '../UserInterface';
 import { useMenu } from './useMenu';
-import { CSSProperties, useMemo } from 'react';
+import { CSSProperties } from 'react';
 import { useGameContext } from '../context/Provider';
 
 interface Props {
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled } = useMenu({ menuData, ui, onDone });
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover } = useMenu({ menuData, ui, onDone });
 
   const position: [number, number] = [
     menuData?.position?.[0] ?? 50,
@@ -46,19 +46,23 @@ export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
           fill: "white",
         }}/>
       </svg>
-      <div style={{ paddingTop: 10 }}>
+      <div style={{ 
+        paddingTop: 10,
+        cursor: menuHoverEnabled ? "inherit" : "auto",
+      }}>
         <div style={{ height: `calc(100% - 27px)`, overflow: "hidden" }}>
           <div style={{ marginTop: scroll * -31, transition: "margin-top .2s" }}>
             {map(menuData.items, (item, index) => {
               const style: CSSProperties = {
                 color: selectedItem === item ? 'black' : 'white',
                 backgroundColor: selectedItem === item ? 'white' : 'black',
+                cursor: !item?.disabled ? "inherit" : "auto",
               };
               return (
                 <div key={index} style={style}
-                  onMouseOver={() => select(index)}
-                  onDrag={(e) => console.log(e.clientX)}
-                  onClick={() => popupControl.onAction()}>
+                  onMouseMove={enableMenuHover}
+                  onMouseOver={menuHoverEnabled ? () => select(index) : undefined}
+                  onClick={menuHoverEnabled && !item?.disabled ? () => popupControl.onAction() : undefined}>
                   {item?.label}
                 </div>
               );
