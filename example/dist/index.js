@@ -26,12 +26,14 @@ var Popup2 = function({
   size: [width, height],
   positionFromRight,
   positionFromBottom,
-  fontSize
+  fontSize,
+  disabled
 }) {
   const [h, setH] = import_react4.useState(10);
   import_react4.useEffect(() => {
     requestAnimationFrame(() => setH(100));
   }, [setH]);
+  const { popupControl } = useGameContext();
   return jsx_dev_runtime2.jsxDEV("div", {
     className: "pop-up",
     style: {
@@ -55,8 +57,9 @@ var Popup2 = function({
       children: jsx_dev_runtime2.jsxDEV("div", {
         className: "double-border",
         style: {
+          ...DOUBLE_BORDER_CSS,
           height: `calc(100% - ${DOUBLE_BORDER_HEIGHT_OFFSET}px)`,
-          ...DOUBLE_BORDER_CSS
+          pointerEvents: disabled ? "none" : undefined
         },
         children
       }, undefined, false, undefined, this)
@@ -83,65 +86,95 @@ var useControlsLock = function({ uid, listener }) {
       return () => removeControlsLock(uid);
     }
   }, [addControlsLock, removeControlsLock, locked, uid]);
+  return { lockState };
 };
 var useActions = function({ ui }) {
-  const performActions = import_react6.useCallback(async (actions) => {
+  const performActions = import_react6.useCallback(async (actions, state) => {
     for (let i = 0;i < actions.length; i++) {
-      await actions[i]?.(ui);
+      await actions[i]?.(ui, state);
     }
+    return state;
   }, [ui]);
   return { performActions };
 };
 var useDialog = function({ dialogData, ui, onDone }) {
-  const [index, setIndex] = import_react7.useState(0);
   const { performActions } = useActions({ ui });
-  const nextMessage = import_react7.useCallback(() => setIndex((value) => value + 1), [setIndex]);
-  useControlsLock({ uid: dialogData.uid, listener: { onAction: nextMessage } });
+  const [state, dispatch] = import_react7.useReducer(reducer, {
+    conversations: [dialogData.conversation],
+    indices: [0],
+    get conversation() {
+      return this.conversations[this.conversations.length - 1];
+    },
+    get index() {
+      return this.indices[this.indices.length - 1];
+    }
+  });
+  const nextMessage = import_react7.useCallback(() => dispatch({ nextMessage: true }), [dispatch]);
+  const addConversation = import_react7.useCallback((newConversation) => {
+    dispatch({ newConversation });
+  }, [dispatch]);
+  const { lockState } = useControlsLock({ uid: dialogData.uid, listener: { onAction: nextMessage } });
   import_react7.useEffect(() => {
     ui.nextMessage = nextMessage;
+    ui.addConversation = addConversation;
     return () => {
       ui.nextMessage = () => {
       };
+      ui.addConversation = () => {
+      };
     };
-  }, [nextMessage, ui]);
-  const messages = import_react7.useMemo(() => dialogData.conversation.messages, [dialogData]);
-  const message = import_react7.useMemo(() => messages.at(index), [messages, index]);
+  }, [nextMessage, addConversation, ui]);
+  const messages = import_react7.useMemo(() => state.conversation?.messages, [state]);
+  const message = import_react7.useMemo(() => messages?.at(state.index), [messages, state]);
   import_react7.useEffect(() => {
-    const numMessages = messages.length.valueOf();
-    if (index >= numMessages) {
+    const numMessages = messages?.length.valueOf();
+    if (state.index >= numMessages) {
+      dispatch({ popConversation: true });
+    }
+  }, [messages, state, dispatch]);
+  import_react7.useEffect(() => {
+    if (!state.conversation) {
       ui.closePopup(dialogData.uid);
       onDone();
     }
-  }, [index, ui, messages, dialogData, onDone]);
+  }, [state, ui, onDone, dialogData]);
   import_react7.useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      performActions(actions).then(nextMessage);
+      performActions(actions, {}).then(nextMessage);
     }
   }, [message, performActions, dialogData, nextMessage]);
   return {
-    text: message?.text
+    text: message?.text,
+    disabled: lockState === LockStatus.LOCKED
   };
 };
 var Dialog = function({ dialogData, ui, onDone }) {
-  const { text } = useDialog({ dialogData, ui, onDone });
+  const { text, disabled } = useDialog({ dialogData, ui, onDone });
   const position = [
-    dialogData?.position?.[0] ?? 50,
-    dialogData?.position?.[1] ?? 500
+    dialogData?.position?.[0] ?? 0,
+    dialogData?.position?.[1] ?? 0
   ];
   const size = [
     dialogData?.size?.[0],
     dialogData?.size?.[1]
   ];
   const { fontSize, positionFromRight, positionFromBottom } = dialogData;
+  const { popupControl } = useGameContext();
   return jsx_dev_runtime3.jsxDEV(Popup2, {
     position,
     size,
     fontSize,
     positionFromBottom,
     positionFromRight,
+    disabled,
     children: jsx_dev_runtime3.jsxDEV("div", {
-      style: { padding: 10 },
+      style: {
+        padding: 10,
+        width: "100%",
+        height: "100%"
+      },
+      onClick: () => popupControl.onAction(),
       children: jsx_dev_runtime3.jsxDEV("progressive-text", {
         period: "30",
         children: text
@@ -151,31 +184,45 @@ var Dialog = function({ dialogData, ui, onDone }) {
 };
 var useSelection = function({ menuData }) {
   const [selectedIndex, setSelectedIndex] = import_react8.useState(0);
+  const [scroll, setScroll] = import_react8.useState(0);
   const { onSelection } = useGameContext();
+  import_react8.useEffect(() => onSelection(selectedIndex), [selectedIndex, onSelection]);
+  const scrollDown = import_react8.useCallback(() => {
+    const len = menuData.items.length.valueOf();
+    setScroll((scroll2) => Math.min(len - (menuData.maxRows ?? len), scroll2 + 1));
+  }, [setScroll, menuData]);
+  const scrollUp = import_react8.useCallback(() => setScroll((scroll2) => Math.max(0, scroll2 - 1)), [setScroll]);
   import_react8.useEffect(() => {
-    onSelection(selectedIndex);
-  }, [selectedIndex, onSelection]);
+    if (menuData.maxRows) {
+      if (selectedIndex - scroll >= menuData.maxRows) {
+        scrollDown();
+      } else if (selectedIndex - scroll < 0) {
+        scrollUp();
+      }
+    }
+  }, [selectedIndex, scroll, menuData, scrollUp, scrollDown]);
   const select = import_react8.useCallback((index) => {
     const len = menuData.items.length.valueOf();
-    setSelectedIndex(index % len);
+    setSelectedIndex(Math.max(0, Math.min(index, len - 1)));
   }, [setSelectedIndex, menuData]);
   const moveSelection = import_react8.useCallback((dy) => {
     if (dy) {
       const len = menuData.items.length.valueOf();
-      setSelectedIndex((index) => (index + dy + len) % len);
+      setSelectedIndex((index) => Math.max(0, Math.min(index + dy, len - 1)));
     }
   }, [setSelectedIndex, menuData]);
-  const selectedItem = import_react8.useMemo(() => {
-    return menuData.items.at(selectedIndex);
-  }, [menuData, selectedIndex]);
+  const selectedItem = import_react8.useMemo(() => menuData.items.at(selectedIndex), [menuData, selectedIndex]);
   return {
     select,
     moveSelection,
-    selectedItem
+    selectedItem,
+    scroll,
+    scrollUp,
+    scrollDown
   };
 };
 var useMenu = function({ menuData, ui, onDone }) {
-  const { moveSelection, selectedItem } = useSelection({ menuData });
+  const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
   const { performActions } = useActions({ ui });
   const listener = import_react9.useMemo(() => ({
     onAction() {
@@ -185,11 +232,11 @@ var useMenu = function({ menuData, ui, onDone }) {
       }
       const selectedAction = selectedItem?.action;
       const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-      performActions(actions).then(() => {
+      performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE }).then((state) => {
         if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
           ui.closePopup(menuData.uid);
         }
-        if (behavior !== MenuItemBehavior.NONE) {
+        if (!state.keepMenu) {
           onDone();
         }
       });
@@ -201,11 +248,11 @@ var useMenu = function({ menuData, ui, onDone }) {
       moveSelection(1);
     }
   }), [moveSelection, selectedItem, performActions]);
-  useControlsLock({ uid: menuData.uid, listener });
-  return { selectedItem };
+  const { lockState } = useControlsLock({ uid: menuData.uid, listener });
+  return { selectedItem, select, scroll, scrollUp, scrollDown, disabled: lockState === LockStatus.LOCKED };
 };
 var Menu = function({ menuData, ui, onDone }) {
-  const { selectedItem } = useMenu({ menuData, ui, onDone });
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled } = useMenu({ menuData, ui, onDone });
   const position = [
     menuData?.position?.[0] ?? 50,
     menuData?.position?.[1] ?? 50
@@ -214,23 +261,75 @@ var Menu = function({ menuData, ui, onDone }) {
     menuData?.size?.[0],
     menuData?.size?.[1]
   ];
+  const { popupControl } = useGameContext();
   return jsx_dev_runtime4.jsxDEV(Popup2, {
     position,
     size,
     fontSize: menuData.fontSize,
     positionFromBottom: !!menuData.positionFromBottom,
     positionFromRight: !!menuData.positionFromRight,
-    children: z(menuData.items, (item, index) => {
-      const style = {
-        color: selectedItem === item ? "black" : "white",
-        backgroundColor: selectedItem === item ? "white" : "black"
-      };
-      return jsx_dev_runtime4.jsxDEV("div", {
-        style,
-        children: item?.label
-      }, index, false, undefined, this);
-    })
-  }, undefined, false, undefined, this);
+    disabled,
+    children: [
+      jsx_dev_runtime4.jsxDEV("svg", {
+        xmlns: "http://www.w3.org/2000/svg",
+        style: {
+          position: "absolute",
+          height: 20,
+          marginTop: -15,
+          width: 200,
+          display: scroll > 0 ? "" : "none",
+          left: `calc(50% - 100px)`
+        },
+        onMouseDown: () => scrollUp(),
+        children: jsx_dev_runtime4.jsxDEV("polygon", {
+          points: "100,10 110,20 90,20",
+          style: {
+            fill: "white"
+          }
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this),
+      jsx_dev_runtime4.jsxDEV("div", {
+        style: { paddingTop: 10 },
+        children: jsx_dev_runtime4.jsxDEV("div", {
+          style: { height: `calc(100% - 27px)`, overflow: "hidden" },
+          children: jsx_dev_runtime4.jsxDEV("div", {
+            style: { marginTop: scroll * -31, transition: "margin-top .2s" },
+            children: z(menuData.items, (item, index) => {
+              const style = {
+                color: selectedItem === item ? "black" : "white",
+                backgroundColor: selectedItem === item ? "white" : "black"
+              };
+              return jsx_dev_runtime4.jsxDEV("div", {
+                style,
+                onMouseOver: () => select(index),
+                onDrag: (e) => console.log(e.clientX),
+                onClick: () => popupControl.onAction(),
+                children: item?.label
+              }, index, false, undefined, this);
+            })
+          }, undefined, false, undefined, this)
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this),
+      jsx_dev_runtime4.jsxDEV("svg", {
+        xmlns: "http://www.w3.org/2000/svg",
+        style: {
+          position: "absolute",
+          height: 20,
+          width: 200,
+          marginTop: -5,
+          display: scroll + (menuData.maxRows ?? menuData.items.length.valueOf()) < menuData.items.length.valueOf() ? "" : "none",
+          left: `calc(50% - 100px)`
+        },
+        onMouseDown: () => scrollDown(),
+        children: jsx_dev_runtime4.jsxDEV("polygon", {
+          points: "100,20 110,10 90,10",
+          style: {
+            fill: "white"
+          }
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
 };
 var PopupContainer = function({ popups, ui, onDone }) {
   const [elemsMap, setElemsMap] = import_react10.useState({});
@@ -273,7 +372,7 @@ var PopupContainer = function({ popups, ui, onDone }) {
     const sortedPopups = [...popups];
     sortedPopups.sort((p1, p2) => {
       const r1 = getRect(p1), r2 = getRect(p2);
-      return r1.y - r2.y;
+      return r2.y - r1.y;
     });
     return sortedPopups.map((data) => elemsMap[data.uid ?? ""]);
   }, [elemsMap, popups, getRect]);
@@ -343,31 +442,26 @@ var PopupOverlay = function({ popupManager, popupControl }) {
   }, [setOnDones]);
   return jsx_dev_runtime6.jsxDEV(Provider, {
     context: gameContext,
-    children: [
-      jsx_dev_runtime6.jsxDEV("div", {
-        style: {
-          backgroundColor: "#ffffff66",
-          position: "absolute",
-          width: "100%"
-        },
-        children: "Title"
-      }, undefined, false, undefined, this),
-      jsx_dev_runtime6.jsxDEV(PopupContainer, {
-        popups,
-        ui: popupManager,
-        onDone
-      }, undefined, false, undefined, this)
-    ]
-  }, undefined, true, undefined, this);
+    children: jsx_dev_runtime6.jsxDEV(PopupContainer, {
+      popups,
+      ui: popupManager,
+      onDone
+    }, undefined, false, undefined, this)
+  }, undefined, false, undefined, this);
 };
-var attachPopup = function(root) {
+var attachPopup = function(root, config = {}) {
   const { offsetLeft: left, offsetTop: top } = root;
   const rootElem = document.createElement("div");
   const reactRoot = client.default.createRoot(rootElem);
   const popupManager = new PopupManager;
   const popupControl = new PopupControl;
   reactRoot.render(jsx_dev_runtime6.jsxDEV("div", {
-    style: { ...STYLE, top, left },
+    style: {
+      ...STYLE,
+      top,
+      left,
+      pointerEvents: config.disableTap ? "none" : undefined
+    },
     children: jsx_dev_runtime6.jsxDEV(PopupOverlay, {
       popupManager,
       popupControl
@@ -14780,7 +14874,7 @@ var require_react_dom_development = __commonJS((exports) => {
       function basicStateReducer(state, action) {
         return typeof action === "function" ? action(state) : action;
       }
-      function mountReducer(reducer, initialArg, init) {
+      function mountReducer(reducer2, initialArg, init) {
         var hook = mountWorkInProgressHook();
         var initialState;
         if (init !== undefined) {
@@ -14794,20 +14888,20 @@ var require_react_dom_development = __commonJS((exports) => {
           interleaved: null,
           lanes: NoLanes,
           dispatch: null,
-          lastRenderedReducer: reducer,
+          lastRenderedReducer: reducer2,
           lastRenderedState: initialState
         };
         hook.queue = queue;
         var dispatch = queue.dispatch = dispatchReducerAction.bind(null, currentlyRenderingFiber$1, queue);
         return [hook.memoizedState, dispatch];
       }
-      function updateReducer(reducer, initialArg, init) {
+      function updateReducer(reducer2, initialArg, init) {
         var hook = updateWorkInProgressHook();
         var queue = hook.queue;
         if (queue === null) {
           throw new Error("Should have a queue. This is likely a bug in React. Please file an issue.");
         }
-        queue.lastRenderedReducer = reducer;
+        queue.lastRenderedReducer = reducer2;
         var current2 = currentHook;
         var baseQueue = current2.baseQueue;
         var pendingQueue = queue.pending;
@@ -14866,7 +14960,7 @@ var require_react_dom_development = __commonJS((exports) => {
                 newState = update.eagerState;
               } else {
                 var action = update.action;
-                newState = reducer(newState, action);
+                newState = reducer2(newState, action);
               }
             }
             update = update.next;
@@ -14899,13 +14993,13 @@ var require_react_dom_development = __commonJS((exports) => {
         var dispatch = queue.dispatch;
         return [hook.memoizedState, dispatch];
       }
-      function rerenderReducer(reducer, initialArg, init) {
+      function rerenderReducer(reducer2, initialArg, init) {
         var hook = updateWorkInProgressHook();
         var queue = hook.queue;
         if (queue === null) {
           throw new Error("Should have a queue. This is likely a bug in React. Please file an issue.");
         }
-        queue.lastRenderedReducer = reducer;
+        queue.lastRenderedReducer = reducer2;
         var dispatch = queue.dispatch;
         var lastRenderPhaseUpdate = queue.pending;
         var newState = hook.memoizedState;
@@ -14915,7 +15009,7 @@ var require_react_dom_development = __commonJS((exports) => {
           var update = firstRenderPhaseUpdate;
           do {
             var action = update.action;
-            newState = reducer(newState, action);
+            newState = reducer2(newState, action);
             update = update.next;
           } while (update !== firstRenderPhaseUpdate);
           if (!objectIs(newState, hook.memoizedState)) {
@@ -15592,13 +15686,13 @@ var require_react_dom_development = __commonJS((exports) => {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
           },
-          useReducer: function(reducer, initialArg, init) {
+          useReducer: function(reducer2, initialArg, init) {
             currentHookNameInDev = "useReducer";
             mountHookTypesDev();
             var prevDispatcher = ReactCurrentDispatcher$1.current;
             ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountReducer(reducer, initialArg, init);
+              return mountReducer(reducer2, initialArg, init);
             } finally {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
@@ -15696,13 +15790,13 @@ var require_react_dom_development = __commonJS((exports) => {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
           },
-          useReducer: function(reducer, initialArg, init) {
+          useReducer: function(reducer2, initialArg, init) {
             currentHookNameInDev = "useReducer";
             updateHookTypesDev();
             var prevDispatcher = ReactCurrentDispatcher$1.current;
             ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountReducer(reducer, initialArg, init);
+              return mountReducer(reducer2, initialArg, init);
             } finally {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
@@ -15800,13 +15894,13 @@ var require_react_dom_development = __commonJS((exports) => {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
           },
-          useReducer: function(reducer, initialArg, init) {
+          useReducer: function(reducer2, initialArg, init) {
             currentHookNameInDev = "useReducer";
             updateHookTypesDev();
             var prevDispatcher = ReactCurrentDispatcher$1.current;
             ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnUpdateInDEV;
             try {
-              return updateReducer(reducer, initialArg, init);
+              return updateReducer(reducer2, initialArg, init);
             } finally {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
@@ -15904,13 +15998,13 @@ var require_react_dom_development = __commonJS((exports) => {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
           },
-          useReducer: function(reducer, initialArg, init) {
+          useReducer: function(reducer2, initialArg, init) {
             currentHookNameInDev = "useReducer";
             updateHookTypesDev();
             var prevDispatcher = ReactCurrentDispatcher$1.current;
             ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnRerenderInDEV;
             try {
-              return rerenderReducer(reducer, initialArg, init);
+              return rerenderReducer(reducer2, initialArg, init);
             } finally {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
@@ -16016,14 +16110,14 @@ var require_react_dom_development = __commonJS((exports) => {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
           },
-          useReducer: function(reducer, initialArg, init) {
+          useReducer: function(reducer2, initialArg, init) {
             currentHookNameInDev = "useReducer";
             warnInvalidHookAccess();
             mountHookTypesDev();
             var prevDispatcher = ReactCurrentDispatcher$1.current;
             ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnMountInDEV;
             try {
-              return mountReducer(reducer, initialArg, init);
+              return mountReducer(reducer2, initialArg, init);
             } finally {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
@@ -16137,14 +16231,14 @@ var require_react_dom_development = __commonJS((exports) => {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
           },
-          useReducer: function(reducer, initialArg, init) {
+          useReducer: function(reducer2, initialArg, init) {
             currentHookNameInDev = "useReducer";
             warnInvalidHookAccess();
             updateHookTypesDev();
             var prevDispatcher = ReactCurrentDispatcher$1.current;
             ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnUpdateInDEV;
             try {
-              return updateReducer(reducer, initialArg, init);
+              return updateReducer(reducer2, initialArg, init);
             } finally {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
@@ -16258,14 +16352,14 @@ var require_react_dom_development = __commonJS((exports) => {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
           },
-          useReducer: function(reducer, initialArg, init) {
+          useReducer: function(reducer2, initialArg, init) {
             currentHookNameInDev = "useReducer";
             warnInvalidHookAccess();
             updateHookTypesDev();
             var prevDispatcher = ReactCurrentDispatcher$1.current;
             ReactCurrentDispatcher$1.current = InvalidNestedHooksDispatcherOnUpdateInDEV;
             try {
-              return rerenderReducer(reducer, initialArg, init);
+              return rerenderReducer(reducer2, initialArg, init);
             } finally {
               ReactCurrentDispatcher$1.current = prevDispatcher;
             }
@@ -23917,17 +24011,15 @@ class PopupManager {
   removeDialogListener(listener) {
     this.#listeners.delete(listener);
   }
-  openDialog(_dialog) {
-    throw new Error("Not implemented");
+  async openDialog(_dialog) {
   }
-  openMenu(_menu) {
-    throw new Error("Not implemented");
+  async openMenu(_menu) {
   }
   closePopup() {
-    throw new Error("Not implemented");
   }
   nextMessage() {
-    throw new Error("Not implemented");
+  }
+  addConversation() {
   }
   selection = 0;
 }
@@ -23947,7 +24039,8 @@ var DOUBLE_BORDER_CSS = {
   borderRadius: 10,
   outline: "3px solid black",
   color: "white",
-  padding: 10
+  padding: 10,
+  cursor: "pointer"
 };
 var DOUBLE_BORDER_HEIGHT_OFFSET = 27;
 var DEFAULT_PADDING = 50;
@@ -23960,6 +24053,48 @@ var LockStatus;
   LockStatus2[LockStatus2["UNLOCKED"] = 1] = "UNLOCKED";
 })(LockStatus || (LockStatus = {}));
 var import_react6 = __toESM(require_react(), 1);
+var reducer = function(state, action) {
+  const { conversations, indices } = state;
+  if (action.nextMessage) {
+    return {
+      conversations,
+      indices: [...indices.slice(0, indices.length - 1), indices[indices.length - 1] + 1],
+      get conversation() {
+        return this.conversations[this.conversations.length - 1];
+      },
+      get index() {
+        return this.indices[this.indices.length - 1];
+      }
+    };
+  } else if (action.newConversation) {
+    return {
+      conversations: [...conversations, action.newConversation],
+      indices: [
+        ...indices.slice(indices.length - 1),
+        indices[indices.length - 1] + 1,
+        0
+      ],
+      get conversation() {
+        return this.conversations[this.conversations.length - 1];
+      },
+      get index() {
+        return this.indices[this.indices.length - 1];
+      }
+    };
+  } else if (action.popConversation) {
+    return {
+      conversations: conversations.slice(0, conversations.length - 1),
+      indices: indices.slice(0, indices.length - 1),
+      get conversation() {
+        return this.conversations[this.conversations.length - 1];
+      },
+      get index() {
+        return this.indices[this.indices.length - 1];
+      }
+    };
+  }
+  return state;
+};
 
 class ProgressiveText extends HTMLElement {
   #observer;
@@ -24068,9 +24203,9 @@ var client = __toESM(require_client(), 1);
 var jsx_dev_runtime6 = __toESM(require_jsx_dev_runtime(), 1);
 var STYLE = {
   position: "absolute",
-  pointerEvents: "none",
   width: "100%",
-  height: "100%"
+  height: "100%",
+  userSelect: "none"
 };
 export {
   attachPopup,

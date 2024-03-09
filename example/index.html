@@ -29,54 +29,101 @@
       document.getElementById('start-over').disabled = true;
       setTimeout(async () => {
         await ui.openDialog({
-            conversation: {
-              messages: [
-                { text: "Hello there." },
-                {
-                  text: "How are you?",
-                  action: ui => ui.openMenu({
-                    position: [400, 340],
-                    size: [undefined, 150],
-                    positionFromRight: true,
-                    items: [
-                      {
-                        label: "I don't know",
-                        behavior: MenuItemBehavior.NONE,
-                        action: [
-                          ui => ui.openDialog({
-                            position: [100, 100],
-                            size: [300, 200],
-                            conversation: {
-                              messages: [
-                                { text: "You should know!" },
-                              ],
-                            },
-                          }),
-                        ],
-                      },
-                      {
-                        label: "good",
-                        action: ui => ui.openDialog({
+          position: [50, 200],
+          positionFromBottom: true,
+          conversation: {
+            messages: [
+              { text: "Hello there." },
+              {
+                text: "How are you?",
+                action: ui => ui.openMenu({
+                  position: [400, 360],
+                  size: [undefined, 150],
+                  positionFromBottom: true,
+                  positionFromRight: true,
+                  maxRows: 3,
+                  items: [
+                    {
+                      label: "I don't know",
+                      behavior: MenuItemBehavior.NONE,
+                      action: [
+                        ui => ui.openDialog({
+                          position: [100, 100],
+                          size: [300, 200],
                           conversation: {
                             messages: [
-                              { text: "That's nice to know!" },
+                              { text: "You should know!" },
                             ],
                           },
                         }),
-                      },
-                      {
-                        label: "bad",
-                      },
-                    ],
-                  }),
-                },
-                { text: "Bye bye." },
-              ]
-            },
-          });
-          document.getElementById('start-over').disabled = false;
+                      ],
+                    },
+                    {
+                      label: "good",
+                      action: ui => ui.addConversation({
+                        messages: [
+                          { text: "That's nice to know!" },
+                        ],
+                      }),
+                    },
+                    {
+                      label: "bad",
+                      action: [
+                        ui => ui.openDialog({
+                          position: [100, 100],
+                          size: [300, 200],
+                          conversation: {
+                            messages: [
+                              { text: "Get better!" },
+                            ],
+                          },
+                        }),
+                      ],
+                    },
+                    {
+                      label: "----",
+                      behavior: MenuItemBehavior.NONE,
+                    },
+                    {
+                      label: "bye",
+                    },
+                  ],
+                }),
+              },
+              { text: "Good bye!" },
+            ]
+          },
+        });
+        document.getElementById('start-over').disabled = false;
       }, 100);
     };
     window.startDialog();
+  </script>
+  <script>
+    let isKeyDown = false;
+    document.addEventListener("keyup", e => {
+      isKeyDown = false;
+    });
+    document.addEventListener("keydown", e => {
+      if (isKeyDown) {
+        return;
+      }
+      isKeyDown = true;
+      switch(e.code) {
+        case "KeyS":
+          popupControl.onDown();
+          break;
+        case "KeyW":
+          popupControl.onUp();
+          break;
+        case "Space":
+          if (document.getElementById("start-over").disabled) {
+            popupControl.onAction();
+          } else {
+            startDialog();            
+          }
+          break;
+      }
+    });
   </script>
 </html>

@@ -4,6 +4,7 @@
 
 import React, { CSSProperties, useEffect, useState } from 'react';
 import './css/Popup.css';
+import { useGameContext } from '../context/Provider';
 
 interface Props {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface Props {
   positionFromRight?: boolean;
   positionFromBottom?: boolean;
   fontSize: number | undefined;
+  disabled?: boolean;
 }
 
 //  Hack until I get proper CSS to work
@@ -33,6 +35,7 @@ const DOUBLE_BORDER_CSS: CSSProperties = {
   outline: '3px solid black',
   color: 'white',
   padding: 10,
+  cursor: 'pointer',
 };
 
 const DOUBLE_BORDER_HEIGHT_OFFSET = 27;
@@ -46,11 +49,14 @@ export function Popup({
   positionFromRight,
   positionFromBottom,
   fontSize,
+  disabled,
 }: Props) {
   const [h, setH] = useState(10);
   useEffect(() => {
     requestAnimationFrame(() => setH(100));
   }, [setH]);
+
+  const { popupControl } = useGameContext();
 
   return (
     <div
@@ -78,8 +84,9 @@ export function Popup({
         <div
           className="double-border"
           style={{
-            height: `calc(100% - ${DOUBLE_BORDER_HEIGHT_OFFSET}px)`,
             ...DOUBLE_BORDER_CSS,
+            height: `calc(100% - ${DOUBLE_BORDER_HEIGHT_OFFSET}px)`,
+            pointerEvents: disabled ? 'none' : undefined,
           }}
         >
           {children}

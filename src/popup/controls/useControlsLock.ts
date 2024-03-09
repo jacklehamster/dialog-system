@@ -35,4 +35,6 @@ export function useControlsLock({ uid, listener }: Props) {
       return () => removeControlsLock(uid);
     }
   }, [addControlsLock, removeControlsLock, locked, uid]);
+
+  return { lockState };
 }

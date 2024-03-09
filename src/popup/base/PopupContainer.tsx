@@ -63,7 +63,7 @@ export function PopupContainer({ popups, ui, onDone }: Props) {
     sortedPopups.sort((p1, p2) => {
       const r1 = getRect(p1),
         r2 = getRect(p2);
-      return r1.y - r2.y;
+      return r2.y - r1.y;
     });
     return sortedPopups.map((data) => elemsMap[data.uid ?? '']);
   }, [elemsMap, popups, getRect]);

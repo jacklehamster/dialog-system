@@ -76,15 +76,6 @@ export function PopupOverlay({ popupManager, popupControl }: Props) {
 
   return (
     <Provider context={gameContext}>
-      <div
-        style={{
-          backgroundColor: '#ffffff66',
-          position: 'absolute',
-          width: '100%',
-        }}
-      >
-        Title
-      </div>
       <PopupContainer popups={popups} ui={popupManager} onDone={onDone} />
     </Provider>
   );
@@ -92,12 +83,14 @@ export function PopupOverlay({ popupManager, popupControl }: Props) {
 
 const STYLE: React.CSSProperties = {
   position: 'absolute',
-  pointerEvents: 'none',
   width: '100%',
   height: '100%',
+  userSelect: "none",
 };
 
-export function attachPopup(root: HTMLElement): {
+export function attachPopup(root: HTMLElement, config: {
+  disableTap?: boolean,
+} = {}): {
   ui: UserInterface;
   popupControl: PopupControl;
   detach: () => void,
@@ -107,7 +100,9 @@ export function attachPopup(root: HTMLElement): {
   const reactRoot = ReactDOM.createRoot(rootElem);
   const popupManager = new PopupManager();
   const popupControl = new PopupControl();
-  reactRoot.render(<div style={{ ...STYLE, top, left }}>
+  reactRoot.render(<div style={{ ...STYLE, top, left,
+    pointerEvents: config.disableTap ? 'none': undefined,
+  }}>
     <PopupOverlay
       popupManager={popupManager}
       popupControl={popupControl}

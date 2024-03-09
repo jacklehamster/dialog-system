@@ -5,7 +5,7 @@ import { useSelection } from "./useSelection";
 import { useActions } from "../actions/useActions";
 import { MenuItem } from "./MenuItem";
 import { MenuItemBehavior } from '../menu/MenuItemBehavior';
-import { useControlsLock } from "../controls/useControlsLock";
+import { LockStatus, useControlsLock } from "../controls/useControlsLock";
 import { PopupControlListener } from "../controls/PopupControlListener";
 
 interface Props {
@@ -16,10 +16,15 @@ interface Props {
 
 interface Result {
   selectedItem?: MenuItem;
+  select(index: number): void;
+  disabled: boolean;
+  scroll: number;
+  scrollUp(): void;
+  scrollDown(): void;
 }
 
 export function useMenu({ menuData, ui, onDone }: Props): Result {
-  const { moveSelection, selectedItem } = useSelection({ menuData });
+  const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
   const { performActions } = useActions({ ui });
 
   const listener = useMemo<PopupControlListener>(() => ({
@@ -30,11 +35,11 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
       }
       const selectedAction = selectedItem?.action;
       const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-      performActions(actions).then(() => {
+      performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE }).then(state => {
         if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
           ui.closePopup(menuData.uid);
         }
-        if (behavior !== MenuItemBehavior.NONE) {
+        if (!state.keepMenu) {
           onDone();
         }
       });
@@ -47,7 +52,7 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
     },
   }), [moveSelection, selectedItem, performActions]);
 
-  useControlsLock({ uid: menuData.uid, listener });
+  const { lockState } = useControlsLock({ uid: menuData.uid, listener });
 
-  return { selectedItem };
+  return { selectedItem, select, scroll, scrollUp, scrollDown, disabled: lockState === LockStatus.LOCKED };
 }

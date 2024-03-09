@@ -8,31 +8,47 @@ interface Props {
 
 export function useSelection({ menuData }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [scroll, setScroll] = useState(0);
   const { onSelection } = useGameContext();
 
+  useEffect(() => onSelection(selectedIndex), [selectedIndex, onSelection]);
+
+  const scrollDown = useCallback(() => {
+    const len = menuData.items.length.valueOf();
+    setScroll(scroll => Math.min(len - (menuData.maxRows ?? len), scroll + 1));
+  }, [setScroll, menuData]);
+  const scrollUp = useCallback(() => setScroll(scroll => Math.max(0, scroll - 1)), [setScroll]);
+
   useEffect(() => {
-    onSelection(selectedIndex);
-  }, [selectedIndex, onSelection]);
+    if (menuData.maxRows) {
+      if (selectedIndex - scroll >= menuData.maxRows) {
+        scrollDown();
+      } else if (selectedIndex - scroll < 0) {
+        scrollUp();
+      }
+    }
+  }, [selectedIndex, scroll, menuData, scrollUp, scrollDown]);
 
   const select = useCallback((index: number) => {
     const len = menuData.items.length.valueOf();
-    setSelectedIndex(index % len);
+    setSelectedIndex(Math.max(0, Math.min(index, len - 1)));
   }, [setSelectedIndex, menuData]);
 
   const moveSelection = useCallback((dy: number) => {
     if (dy) {
       const len = menuData.items.length.valueOf();
-      setSelectedIndex(index => (index + dy + len) % len);
+      setSelectedIndex(index => Math.max(0, Math.min(index + dy, len - 1)));
     }
   }, [setSelectedIndex, menuData]);
 
-  const selectedItem = useMemo(() => {
-    return menuData.items.at(selectedIndex);
-  }, [menuData, selectedIndex]);
+  const selectedItem = useMemo(() => menuData.items.at(selectedIndex), [menuData, selectedIndex]);
 
   return {
     select,
     moveSelection,
     selectedItem,
+    scroll,
+    scrollUp,
+    scrollDown,
   }
 }

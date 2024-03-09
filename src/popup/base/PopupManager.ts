@@ -25,17 +25,15 @@ export class PopupManager implements UserInterface {
     this.#listeners.delete(listener);
   }
 
-  openDialog(_dialog: DialogData): Promise<void> {
-    throw new Error("Not implemented");
+  async openDialog(_dialog: DialogData): Promise<void> {
   }
-  openMenu(_menu: MenuData): Promise<void> {
-    throw new Error("Not implemented");
+  async openMenu(_menu: MenuData): Promise<void> {
   }
   closePopup(): void {
-    throw new Error("Not implemented");
   }
   nextMessage(): void {
-    throw new Error("Not implemented");
+  }
+  addConversation(): void {
   }
   selection: number = 0;
 }
