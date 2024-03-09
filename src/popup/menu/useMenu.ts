@@ -29,17 +29,15 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
         ui.closePopup(menuData.uid);
       }
       const selectedAction = selectedItem?.action;
-      if (selectedAction) {
-        const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-        performActions(actions).then(() => {
-          if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
-            ui.closePopup(menuData.uid);
-          }
-          if (behavior !== MenuItemBehavior.NONE) {
-            onDone();
-          }
-        });
-      }
+      const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
+      performActions(actions).then(() => {
+        if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
+          ui.closePopup(menuData.uid);
+        }
+        if (behavior !== MenuItemBehavior.NONE) {
+          onDone();
+        }
+      });
     },
     onUp() {
       moveSelection(-1);

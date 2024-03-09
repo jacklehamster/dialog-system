@@ -21,13 +21,14 @@
     </body>
   <script type="module">
     import { attachPopup, MenuItemBehavior } from './dist/index.js';
-    const { popupManager, popupControl } = attachPopup(document.getElementById("root"));
+    const { ui, popupControl, detach } = attachPopup(document.getElementById("root"));
     window.popupControl = popupControl;
     window.MenuItemBehavior = MenuItemBehavior;
+    window.detach = detach;
     window.startDialog = () => {
       document.getElementById('start-over').disabled = true;
       setTimeout(async () => {
-        await popupManager.openDialog({
+        await ui.openDialog({
             conversation: {
               messages: [
                 { text: "Hello there." },

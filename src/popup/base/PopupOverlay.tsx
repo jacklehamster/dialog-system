@@ -7,6 +7,7 @@ import { PopupContainer } from './PopupContainer';
 import { v4 as uuidv4 } from 'uuid';
 import { PopupControl } from '../controls/PopupControl';
 import ReactDOM from 'react-dom/client';
+import { UserInterface } from '../UserInterface';
 
 interface Props {
   popupManager: PopupManager;
@@ -96,7 +97,11 @@ const STYLE: React.CSSProperties = {
   height: '100%',
 };
 
-export function attachPopup(root: HTMLElement): Props {
+export function attachPopup(root: HTMLElement): {
+  ui: UserInterface;
+  popupControl: PopupControl;
+  detach: () => void,
+} {
   const { offsetLeft: left, offsetTop: top } = root;
   const rootElem = document.createElement('div');
   const reactRoot = ReactDOM.createRoot(rootElem);
@@ -109,5 +114,8 @@ export function attachPopup(root: HTMLElement): Props {
     />
   </div>);
   root.appendChild(rootElem);
-  return { popupManager, popupControl };
+  const detach = () => {
+    reactRoot.unmount();
+  };
+  return { ui: popupManager, popupControl, detach };
 }
