@@ -27,14 +27,14 @@ var Popup2 = function({
   positionFromRight,
   positionFromBottom,
   fontSize,
-  disabled
+  disabled,
+  hidden
 }) {
   const [h, setH] = import_react4.useState(10);
   import_react4.useEffect(() => {
-    requestAnimationFrame(() => setH(100));
-  }, [setH]);
-  const { popupControl } = useGameContext();
-  return jsx_dev_runtime2.jsxDEV("div", {
+    requestAnimationFrame(() => setH(hidden ? 0 : 100));
+  }, [setH, hidden]);
+  return !hidden && jsx_dev_runtime2.jsxDEV("div", {
     className: "pop-up",
     style: {
       position: "absolute",
@@ -225,6 +225,7 @@ var useMenu = function({ menuData, ui, onDone }) {
   const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
   const { performActions } = useActions({ ui });
   const [menuHoverEnabled, setMenuHoverEnabled] = import_react9.useState(false);
+  const [hidden, setHidden] = import_react9.useState(false);
   const listener = import_react9.useMemo(() => ({
     onAction() {
       if (selectedItem?.disabled) {
@@ -234,14 +235,20 @@ var useMenu = function({ menuData, ui, onDone }) {
       if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
         ui.closePopup(menuData.uid);
       }
+      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+        setHidden(true);
+      }
       const selectedAction = selectedItem?.action;
       const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-      performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE }).then((state) => {
+      performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then((state) => {
         if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
           ui.closePopup(menuData.uid);
         }
         if (!state.keepMenu) {
           onDone();
+        }
+        if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+          setHidden(false);
         }
       });
     },
@@ -253,7 +260,7 @@ var useMenu = function({ menuData, ui, onDone }) {
       setMenuHoverEnabled(false);
       moveSelection(1);
     }
-  }), [menuData, moveSelection, selectedItem, performActions, setMenuHoverEnabled]);
+  }), [menuData, moveSelection, selectedItem, performActions, setMenuHoverEnabled, setHidden]);
   const { lockState } = useControlsLock({ uid: menuData.uid, listener });
   const enableMenuHover = import_react9.useCallback(!menuHoverEnabled ? () => {
     setMenuHoverEnabled(true);
@@ -267,11 +274,12 @@ var useMenu = function({ menuData, ui, onDone }) {
     scrollDown,
     disabled: lockState === LockStatus.LOCKED,
     menuHoverEnabled,
-    enableMenuHover
+    enableMenuHover,
+    hidden
   };
 };
 var Menu = function({ menuData, ui, onDone }) {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover } = useMenu({ menuData, ui, onDone });
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden } = useMenu({ menuData, ui, onDone });
   const position = [
     menuData?.position?.[0] ?? 50,
     menuData?.position?.[1] ?? 50
@@ -288,6 +296,7 @@ var Menu = function({ menuData, ui, onDone }) {
     positionFromBottom: !!menuData.positionFromBottom,
     positionFromRight: !!menuData.positionFromRight,
     disabled,
+    hidden,
     children: [
       jsx_dev_runtime4.jsxDEV("svg", {
         xmlns: "http://www.w3.org/2000/svg",
@@ -356,23 +365,24 @@ var Menu = function({ menuData, ui, onDone }) {
 };
 var PopupContainer = function({ popups, ui, onDone }) {
   const [elemsMap, setElemsMap] = import_react10.useState({});
+  const registry = import_react10.useMemo(() => ({
+    dialog: (data, ui2, onDone2) => jsx_dev_runtime5.jsxDEV(Dialog, {
+      dialogData: data,
+      ui: ui2,
+      onDone: onDone2
+    }, data.uid, false, undefined, this),
+    menu: (data, ui2, onDone2) => jsx_dev_runtime5.jsxDEV(Menu, {
+      menuData: data,
+      ui: ui2,
+      onDone: onDone2
+    }, data.uid, false, undefined, this)
+  }), []);
   const createElement = import_react10.useCallback((data) => {
-    switch (data.type) {
-      case "dialog":
-        return jsx_dev_runtime5.jsxDEV(Dialog, {
-          dialogData: data,
-          ui,
-          onDone
-        }, data.uid, false, undefined, this);
-      case "menu":
-        return jsx_dev_runtime5.jsxDEV(Menu, {
-          menuData: data,
-          ui,
-          onDone
-        }, data.uid, false, undefined, this);
+    if (!data.type) {
+      throw new Error(`Invalid data type: ${data.type}`);
     }
-    throw new Error(`Invalid data type: ${data.type}`);
-  }, [ui, onDone]);
+    return registry[data.type](data, ui, onDone);
+  }, [ui, onDone, registry]);
   import_react10.useEffect(() => {
     setElemsMap((elemsMap2) => {
       const newElemsMap = {};
@@ -24191,6 +24201,7 @@ var MenuItemBehavior;
   MenuItemBehavior2[MenuItemBehavior2["NONE"] = 0] = "NONE";
   MenuItemBehavior2[MenuItemBehavior2["CLOSE_ON_SELECT"] = 1] = "CLOSE_ON_SELECT";
   MenuItemBehavior2[MenuItemBehavior2["CLOSE_AFTER_SELECT"] = 2] = "CLOSE_AFTER_SELECT";
+  MenuItemBehavior2[MenuItemBehavior2["HIDE_ON_SELECT"] = 3] = "HIDE_ON_SELECT";
 })(MenuItemBehavior || (MenuItemBehavior = {}));
 var jsx_dev_runtime4 = __toESM(require_jsx_dev_runtime(), 1);
 var jsx_dev_runtime5 = __toESM(require_jsx_dev_runtime(), 1);

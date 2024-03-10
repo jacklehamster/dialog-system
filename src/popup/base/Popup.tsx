@@ -4,7 +4,6 @@
 
 import React, { CSSProperties, useEffect, useState } from 'react';
 import './css/Popup.css';
-import { useGameContext } from '../context/Provider';
 
 interface Props {
   children: React.ReactNode;
@@ -14,6 +13,7 @@ interface Props {
   positionFromBottom?: boolean;
   fontSize: number | undefined;
   disabled?: boolean;
+  hidden?: boolean;
 }
 
 //  Hack until I get proper CSS to work
@@ -50,15 +50,14 @@ export function Popup({
   positionFromBottom,
   fontSize,
   disabled,
+  hidden,
 }: Props) {
   const [h, setH] = useState(10);
   useEffect(() => {
-    requestAnimationFrame(() => setH(100));
-  }, [setH]);
+    requestAnimationFrame(() => setH(hidden ? 0 : 100));
+  }, [setH, hidden]);
 
-  const { popupControl } = useGameContext();
-
-  return (
+  return !hidden && (
     <div
       className="pop-up"
       style={{

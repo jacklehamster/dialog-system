@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover } = useMenu({ menuData, ui, onDone });
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden } = useMenu({ menuData, ui, onDone });
 
   const position: [number, number] = [
     menuData?.position?.[0] ?? 50,
@@ -33,6 +33,7 @@ export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
       positionFromBottom={!!menuData.positionFromBottom}
       positionFromRight={!!menuData.positionFromRight}
       disabled={disabled}
+      hidden={hidden}
     >
       <svg xmlns="http://www.w3.org/2000/svg" style={{
           position: "absolute",

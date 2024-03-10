@@ -23,12 +23,14 @@ interface Result {
   scrollDown(): void;
   menuHoverEnabled: boolean;
   enableMenuHover(): void;
+  hidden?: boolean;
 }
 
 export function useMenu({ menuData, ui, onDone }: Props): Result {
   const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
   const { performActions } = useActions({ ui });
   const [menuHoverEnabled, setMenuHoverEnabled] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   const listener = useMemo<PopupControlListener>(() => ({
     onAction() {
@@ -39,14 +41,20 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
       if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
         ui.closePopup(menuData.uid);
       }
+      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+        setHidden(true);
+      }
       const selectedAction = selectedItem?.action;
       const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-      performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE }).then(state => {
+      performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then(state => {
         if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
           ui.closePopup(menuData.uid);
         }
         if (!state.keepMenu) {
           onDone();
+        }
+        if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+          setHidden(false);
         }
       });
     },
@@ -58,7 +66,7 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
       setMenuHoverEnabled(false);
       moveSelection(1);
     },
-  }), [menuData, moveSelection, selectedItem, performActions, setMenuHoverEnabled]);
+  }), [menuData, moveSelection, selectedItem, performActions, setMenuHoverEnabled, setHidden]);
 
   const { lockState } = useControlsLock({ uid: menuData.uid, listener });
   const enableMenuHover = useCallback(!menuHoverEnabled ? () => {
@@ -74,5 +82,6 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
     disabled: lockState === LockStatus.LOCKED,
     menuHoverEnabled,
     enableMenuHover,
+    hidden,
   };
 }

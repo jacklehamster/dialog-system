@@ -25,10 +25,9 @@
     window.popupControl = popupControl;
     window.MenuItemBehavior = MenuItemBehavior;
     window.detach = detach;
-    window.startDialog = () => {
-      document.getElementById('start-over').disabled = true;
-      setTimeout(async () => {
-        await ui.openDialog({
+
+    async function openTestDialog() {
+      return await ui.openDialog({
           position: [50, 200],
           positionFromBottom: true,
           conversation: {
@@ -93,7 +92,21 @@
               { text: "Good bye!" },
             ]
           },
+        });      
+    }
+
+
+    window.startDialog = () => {
+      document.getElementById('start-over').disabled = true;
+      setTimeout(async () => {
+        await ui.openMenu({
+          items: [
+            { label: "Test", action: openTestDialog, behavior: MenuItemBehavior.HIDE_ON_SELECT },
+            { label: "Exit" },
+          ],
         });
+
+
         document.getElementById('start-over').disabled = false;
       }, 100);
     };

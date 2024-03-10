@@ -4,6 +4,8 @@ import { Dialog } from '../dialog/Dialog';
 import { Menu } from '../menu/Menu';
 import { UserInterface } from '../UserInterface';
 import { PopupData } from './PopupData';
+import { DialogData } from '../dialog/DialogData';
+import { MenuData } from '../menu/MenuData';
 
 interface Props {
   popups: ElemData[];
@@ -13,23 +15,21 @@ interface Props {
 
 export function PopupContainer({ popups, ui, onDone }: Props) {
   const [elemsMap, setElemsMap] = useState<Record<string, JSX.Element>>({});
+  const registry: Record<string, (data: ElemData, ui: UserInterface, onDone: ()=> void) => JSX.Element> = useMemo(() => ({
+      dialog:  (data, ui, onDone) => <Dialog key={data.uid} dialogData={data as DialogData} ui={ui} onDone={onDone} />,
+      menu: (data, ui, onDone) => <Menu key={data.uid} menuData={data as MenuData} ui={ui} onDone={onDone} />,
+  }), []);
 
   const createElement = useCallback<(data: ElemData) => JSX.Element>(
     (data) => {
-      switch (data.type) {
-        case 'dialog':
-          return (
-            <Dialog key={data.uid} dialogData={data} ui={ui} onDone={onDone} />
-          );
-        case 'menu':
-          return (
-            <Menu key={data.uid} menuData={data} ui={ui} onDone={onDone} />
-          );
+      if (!data.type) {
+        throw new Error(`Invalid data type: ${data.type}`);
       }
-      throw new Error(`Invalid data type: ${data.type}`);
+      return registry[data.type](data, ui, onDone);
     },
-    [ui, onDone],
+    [ui, onDone, registry],
   );
+
 
   useEffect(() => {
     setElemsMap((elemsMap) => {
