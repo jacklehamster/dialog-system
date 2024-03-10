@@ -2,9 +2,19 @@
 
 [![npm version](https://badge.fury.io/js/dialog-system.svg)](https://www.npmjs.com/package/dialog-system)
 
-Bun template for creating projects using bunjs
+Dialog system is a web based framework for showing popup dialog and menus, mainly for JRPGs.
 
 ![](https://jacklehamster.github.io/dialog-system/icon.png)
+
+
+
+Docs: TBD
+
+
+
+
+
+
 ## Install bun
 
 https://bun.sh/
