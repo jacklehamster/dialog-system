@@ -44,7 +44,7 @@ export function PopupContainer({ popups, ui, onDone }: Props) {
   }, [popups, setElemsMap, createElement]);
 
   const getRect = useCallback(
-    ({ positionFromRight, positionFromBottom, position, size }: PopupData) => {
+    ({ positionFromRight, positionFromBottom, position, size }: PopupData["layout"] = {}) => {
       const x = positionFromRight
         ? position?.[0] ?? 0
         : Number.MAX_SAFE_INTEGER - (position?.[0] ?? 0);
@@ -61,8 +61,8 @@ export function PopupContainer({ popups, ui, onDone }: Props) {
   const elements = useMemo<JSX.Element[]>(() => {
     const sortedPopups = [...popups];
     sortedPopups.sort((p1, p2) => {
-      const r1 = getRect(p1),
-        r2 = getRect(p2);
+      const r1 = getRect(p1.layout),
+        r2 = getRect(p2.layout);
       return r2.y - r1.y;
     });
     return sortedPopups.map((data) => elemsMap[data.uid ?? '']);

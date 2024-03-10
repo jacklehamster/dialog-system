@@ -13,24 +13,25 @@ interface Props {
 
 export function Dialog({ dialogData, ui, onDone }: Props): JSX.Element {
   const { text, disabled } = useDialog({ dialogData, ui, onDone });
+  const layout = dialogData.layout ?? {};
 
   const position: [number, number] = [
-    dialogData?.position?.[0] ?? 0,
-    dialogData?.position?.[1] ?? 0,
+    layout?.position?.[0] ?? 0,
+    layout?.position?.[1] ?? 0,
   ];
   const size: [number | undefined, number | undefined] = [
-    dialogData?.size?.[0],
-    dialogData?.size?.[1],
+    layout?.size?.[0],
+    layout?.size?.[1],
   ];
 
-  const { fontSize, positionFromRight, positionFromBottom } = dialogData;
+  const { positionFromRight, positionFromBottom } = layout;
   const { popupControl } = useGameContext();
 
   return (
     <Popup
       position={position}
       size={size}
-      fontSize={fontSize}
+      fontSize={dialogData.style?.fontSize}
       positionFromBottom={positionFromBottom}
       positionFromRight={positionFromRight}
       disabled={disabled}

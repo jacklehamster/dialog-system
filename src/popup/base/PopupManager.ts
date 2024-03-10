@@ -2,6 +2,8 @@ import { UserInterface } from '../UserInterface';
 import { PopupListener } from './PopupListener';
 import { DialogData } from '../dialog/DialogData';
 import { MenuData } from '../menu/MenuData';
+import { PopAction } from '../actions/PopAction';
+import { PopState } from '../actions/PopState';
 
 export class PopupManager implements UserInterface {
   #popupUids: string[] = [];
@@ -33,7 +35,10 @@ export class PopupManager implements UserInterface {
   }
   nextMessage(): void {
   }
-  addConversation(): void {
+  insertConversation(): void {
+  }
+  async performActions(_actions: (PopAction | undefined)[], state: PopState): Promise<PopState> {
+    return {};
   }
   selection: number = 0;
 }

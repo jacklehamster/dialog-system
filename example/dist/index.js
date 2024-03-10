@@ -89,12 +89,19 @@ var useControlsLock = function({ uid, listener }) {
   return { lockState };
 };
 var useActions = function({ ui }) {
+  const registry = import_react6.useMemo(() => new ConversionRegistry, []);
   const performActions = import_react6.useCallback(async (actions, state) => {
-    for (let i = 0;i < actions.length; i++) {
-      await actions[i]?.(ui, state);
+    for (const action of actions) {
+      if (action) {
+        const popActionFun = typeof action === "function" ? action : registry.convert(action);
+        await popActionFun(ui, state);
+      }
     }
     return state;
-  }, [ui]);
+  }, [ui, registry]);
+  import_react6.useEffect(() => {
+    ui.performActions = performActions;
+  }, [ui, performActions]);
   return { performActions };
 };
 var useDialog = function({ dialogData, ui, onDone }) {
@@ -110,28 +117,22 @@ var useDialog = function({ dialogData, ui, onDone }) {
     }
   });
   const nextMessage = import_react7.useCallback(() => dispatch({ nextMessage: true }), [dispatch]);
-  const addConversation = import_react7.useCallback((newConversation) => {
+  const insertConversation = import_react7.useCallback((newConversation) => {
     dispatch({ newConversation });
   }, [dispatch]);
   const { lockState } = useControlsLock({ uid: dialogData.uid, listener: { onAction: nextMessage } });
   import_react7.useEffect(() => {
     ui.nextMessage = nextMessage;
-    ui.addConversation = addConversation;
+    ui.insertConversation = insertConversation;
     return () => {
       ui.nextMessage = () => {
       };
-      ui.addConversation = () => {
+      ui.insertConversation = () => {
       };
     };
-  }, [nextMessage, addConversation, ui]);
+  }, [nextMessage, insertConversation, ui]);
   const messages = import_react7.useMemo(() => state.conversation?.messages, [state]);
   const message = import_react7.useMemo(() => messages?.at(state.index), [messages, state]);
-  import_react7.useEffect(() => {
-    const numMessages = messages?.length.valueOf();
-    if (state.index >= numMessages) {
-      dispatch({ popConversation: true });
-    }
-  }, [messages, state, dispatch]);
   import_react7.useEffect(() => {
     if (!state.conversation) {
       ui.closePopup(dialogData.uid);
@@ -151,20 +152,21 @@ var useDialog = function({ dialogData, ui, onDone }) {
 };
 var Dialog = function({ dialogData, ui, onDone }) {
   const { text, disabled } = useDialog({ dialogData, ui, onDone });
+  const layout = dialogData.layout ?? {};
   const position = [
-    dialogData?.position?.[0] ?? 0,
-    dialogData?.position?.[1] ?? 0
+    layout?.position?.[0] ?? 0,
+    layout?.position?.[1] ?? 0
   ];
   const size = [
-    dialogData?.size?.[0],
-    dialogData?.size?.[1]
+    layout?.size?.[0],
+    layout?.size?.[1]
   ];
-  const { fontSize, positionFromRight, positionFromBottom } = dialogData;
+  const { positionFromRight, positionFromBottom } = layout;
   const { popupControl } = useGameContext();
   return jsx_dev_runtime3.jsxDEV(Popup2, {
     position,
     size,
-    fontSize,
+    fontSize: dialogData.style?.fontSize,
     positionFromBottom,
     positionFromRight,
     disabled,
@@ -280,21 +282,22 @@ var useMenu = function({ menuData, ui, onDone }) {
 };
 var Menu = function({ menuData, ui, onDone }) {
   const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden } = useMenu({ menuData, ui, onDone });
+  const layout = menuData?.layout ?? {};
   const position = [
-    menuData?.position?.[0] ?? 50,
-    menuData?.position?.[1] ?? 50
+    layout?.position?.[0] ?? 50,
+    layout?.position?.[1] ?? 50
   ];
   const size = [
-    menuData?.size?.[0],
-    menuData?.size?.[1]
+    layout?.size?.[0],
+    layout?.size?.[1]
   ];
   const { popupControl } = useGameContext();
   return jsx_dev_runtime4.jsxDEV(Popup2, {
     position,
     size,
-    fontSize: menuData.fontSize,
-    positionFromBottom: !!menuData.positionFromBottom,
-    positionFromRight: !!menuData.positionFromRight,
+    fontSize: menuData.style?.fontSize,
+    positionFromBottom: !!menuData.layout,
+    positionFromRight: !!menuData.layout,
     disabled,
     hidden,
     children: [
@@ -394,7 +397,7 @@ var PopupContainer = function({ popups, ui, onDone }) {
       return newElemsMap;
     });
   }, [popups, setElemsMap, createElement]);
-  const getRect = import_react10.useCallback(({ positionFromRight, positionFromBottom, position, size }) => {
+  const getRect = import_react10.useCallback(({ positionFromRight, positionFromBottom, position, size } = {}) => {
     const x = positionFromRight ? position?.[0] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[0] ?? 0);
     const y = positionFromBottom ? position?.[1] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[1] ?? 0);
     const width = size?.[0] ?? Number.MAX_SAFE_INTEGER;
@@ -404,7 +407,7 @@ var PopupContainer = function({ popups, ui, onDone }) {
   const elements = import_react10.useMemo(() => {
     const sortedPopups = [...popups];
     sortedPopups.sort((p1, p2) => {
-      const r1 = getRect(p1), r2 = getRect(p2);
+      const r1 = getRect(p1.layout), r2 = getRect(p2.layout);
       return r2.y - r1.y;
     });
     return sortedPopups.map((data) => elemsMap[data.uid ?? ""]);
@@ -24052,7 +24055,10 @@ class PopupManager {
   }
   nextMessage() {
   }
-  addConversation() {
+  insertConversation() {
+  }
+  async performActions(_actions, state) {
+    return {};
   }
   selection = 0;
 }
@@ -24086,8 +24092,58 @@ var LockStatus;
   LockStatus2[LockStatus2["UNLOCKED"] = 1] = "UNLOCKED";
 })(LockStatus || (LockStatus = {}));
 var import_react6 = __toESM(require_react(), 1);
+
+class InsertConversationConvertor {
+  convert(model) {
+    return (ui) => ui.insertConversation(model.insertConversation);
+  }
+}
+
+class OpenDialogConvertor {
+  convert(model) {
+    return (ui) => ui.openDialog(model.dialog);
+  }
+}
+
+class OpenMenuConvertor {
+  convert(model) {
+    return (ui) => ui.openMenu(model.menu);
+  }
+}
+
+class ConversionRegistry {
+  #insertConversationConvertor = new InsertConversationConvertor;
+  #openDialogConvertor = new OpenDialogConvertor;
+  #openMenuConvertor = new OpenMenuConvertor;
+  convert(model) {
+    const { insertConversation, dialog, menu } = model;
+    if (insertConversation) {
+      return this.#insertConversationConvertor.convert({ insertConversation });
+    }
+    if (dialog) {
+      return this.#openDialogConvertor.convert({ dialog });
+    }
+    if (menu) {
+      return this.#openMenuConvertor.convert({ menu });
+    }
+    return () => {
+    };
+  }
+}
 var reducer = function(state, action) {
   const { conversations, indices } = state;
+  if (state.index >= state.conversation.messages.length.valueOf() - 1) {
+    return {
+      conversations: conversations.slice(0, conversations.length - 1),
+      indices: indices.slice(0, indices.length - 1),
+      get conversation() {
+        return this.conversations[this.conversations.length - 1];
+      },
+      get index() {
+        return this.indices[this.indices.length - 1];
+      }
+    };
+  }
   if (action.nextMessage) {
     return {
       conversations,
@@ -24241,7 +24297,84 @@ var STYLE = {
   height: "100%",
   userSelect: "none"
 };
+
+// src/index.tsx
+var openTestDialogAction = { dialog: {
+  layout: {
+    position: [50, 200],
+    positionFromBottom: true
+  },
+  conversation: {
+    messages: [
+      { text: "Hello there." },
+      {
+        text: "How are you?",
+        action: { menu: {
+          layout: {
+            position: [400, 360],
+            size: [undefined, 150],
+            positionFromBottom: true,
+            positionFromRight: true
+          },
+          maxRows: 3,
+          items: [
+            {
+              label: "I don't know",
+              behavior: MenuItemBehavior.NONE,
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200]
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "You should know!" }
+                    ]
+                  }
+                } }
+              ]
+            },
+            {
+              label: "good",
+              action: { insertConversation: {
+                messages: [
+                  { text: "That's nice to know!" }
+                ]
+              } }
+            },
+            {
+              label: "bad",
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200]
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "Get better!" }
+                    ]
+                  }
+                } }
+              ]
+            },
+            {
+              label: "----",
+              disabled: true
+            },
+            {
+              label: "bye"
+            }
+          ]
+        } }
+      },
+      { text: "Good bye!" }
+    ]
+  }
+} };
 export {
+  openTestDialogAction,
   attachPopup,
   MenuItemBehavior
 };

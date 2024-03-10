@@ -5,5 +5,6 @@ import { PopupListener } from "./popup/base/PopupListener";
 import { MenuData } from "./popup/menu/MenuData";
 import { DialogData } from "./popup/dialog/DialogData";
 import { MenuItemBehavior } from "./popup/menu/MenuItemBehavior";
+import { PopActionModel } from "./popup/actions/PopActionModel";
 
-export { UserInterface, PopupOverlay, PopupControl, MenuData, DialogData, PopupListener, attachPopup, MenuItemBehavior };
+export { UserInterface, PopupOverlay, PopupControl, MenuData, DialogData, PopupListener, attachPopup, MenuItemBehavior, PopActionModel };

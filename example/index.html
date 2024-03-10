@@ -17,96 +17,29 @@
     <button onclick="popupControl.onUp()">Up</button>
     <button onclick="popupControl.onDown()">Down</button>
     <button id="start-over" onclick="startDialog()">Start over</button>
+    <button onclick="window.detach()">Detach</button>
+    <button onClick="window.edit()">Edit</button>
     <div id="root"></div>
-    </body>
+  </body>
   <script type="module">
-    import { attachPopup, MenuItemBehavior } from './dist/index.js';
+    import { attachPopup, MenuItemBehavior, openTestDialogAction } from './dist/index.js';
     const { ui, popupControl, detach } = attachPopup(document.getElementById("root"));
     window.popupControl = popupControl;
-    window.MenuItemBehavior = MenuItemBehavior;
     window.detach = detach;
 
-    async function openTestDialog() {
-      return await ui.openDialog({
-          position: [50, 200],
-          positionFromBottom: true,
-          conversation: {
-            messages: [
-              { text: "Hello there." },
-              {
-                text: "How are you?",
-                action: ui => ui.openMenu({
-                  position: [400, 360],
-                  size: [undefined, 150],
-                  positionFromBottom: true,
-                  positionFromRight: true,
-                  maxRows: 3,
-                  items: [
-                    {
-                      label: "I don't know",
-                      behavior: MenuItemBehavior.NONE,
-                      action: [
-                        ui => ui.openDialog({
-                          position: [100, 100],
-                          size: [300, 200],
-                          conversation: {
-                            messages: [
-                              { text: "You should know!" },
-                            ],
-                          },
-                        }),
-                      ],
-                    },
-                    {
-                      label: "good",
-                      action: ui => ui.addConversation({
-                        messages: [
-                          { text: "That's nice to know!" },
-                        ],
-                      }),
-                    },
-                    {
-                      label: "bad",
-                      action: [
-                        ui => ui.openDialog({
-                          position: [100, 100],
-                          size: [300, 200],
-                          conversation: {
-                            messages: [
-                              { text: "Get better!" },
-                            ],
-                          },
-                        }),
-                      ],
-                    },
-                    {
-                      label: "----",
-                      disabled: true,
-                    },
-                    {
-                      label: "bye",
-                    },
-                  ],
-                }),
-              },
-              { text: "Good bye!" },
-            ]
-          },
-        });      
-    }
-
+         
+    
 
     window.startDialog = () => {
       document.getElementById('start-over').disabled = true;
+      const startMenuAction = ui => ui.openMenu({
+        items: [
+          { label: "Test", action: openTestDialogAction, behavior: MenuItemBehavior.HIDE_ON_SELECT },
+          { label: "Exit" },
+        ],
+      });
       setTimeout(async () => {
-        await ui.openMenu({
-          items: [
-            { label: "Test", action: openTestDialog, behavior: MenuItemBehavior.HIDE_ON_SELECT },
-            { label: "Exit" },
-          ],
-        });
-
-
+        await startMenuAction(ui);
         document.getElementById('start-over').disabled = false;
       }, 100);
     };

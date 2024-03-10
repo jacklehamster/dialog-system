@@ -14,14 +14,15 @@ interface Props {
 
 export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
   const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden } = useMenu({ menuData, ui, onDone });
+  const layout = menuData?.layout ?? {};
 
   const position: [number, number] = [
-    menuData?.position?.[0] ?? 50,
-    menuData?.position?.[1] ?? 50,
+    layout?.position?.[0] ?? 50,
+    layout?.position?.[1] ?? 50,
   ];
   const size: [number | undefined, number | undefined] = [
-    menuData?.size?.[0],
-    menuData?.size?.[1],
+    layout?.size?.[0],
+    layout?.size?.[1],
   ];
 
   const { popupControl } = useGameContext();
@@ -29,9 +30,9 @@ export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
     <Popup
       position={position}
       size={size}
-      fontSize={menuData.fontSize}
-      positionFromBottom={!!menuData.positionFromBottom}
-      positionFromRight={!!menuData.positionFromRight}
+      fontSize={menuData.style?.fontSize}
+      positionFromBottom={!!menuData.layout}
+      positionFromRight={!!menuData.layout}
       disabled={disabled}
       hidden={hidden}
     >

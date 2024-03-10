@@ -31,6 +31,18 @@ interface ReducerState {
 
 function reducer(state: ReducerState, action: ReducerAction) {
   const { conversations, indices } = state;
+  if (state.index >= state.conversation.messages.length.valueOf() - 1) {
+    return {
+      conversations: conversations.slice(0, conversations.length - 1),
+      indices: indices.slice(0, indices.length - 1),
+      get conversation() {
+        return this.conversations[this.conversations.length - 1];
+      },
+      get index() {
+        return this.indices[this.indices.length - 1];
+      },
+    };
+  }
   if (action.nextMessage) {
     return {
       conversations,
@@ -86,29 +98,29 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   });
 
   const nextMessage = useCallback(() => dispatch({ nextMessage: true }), [dispatch]);
-  const addConversation = useCallback((newConversation: Conversation) => {
+  const insertConversation = useCallback((newConversation: Conversation) => {
     dispatch({ newConversation })
   }, [dispatch]);
   const { lockState } = useControlsLock({ uid: dialogData.uid, listener: { onAction: nextMessage } });
 
   useEffect(() => {
     ui.nextMessage = nextMessage;
-    ui.addConversation = addConversation;
+    ui.insertConversation = insertConversation;
     return () => {
       ui.nextMessage = () => { };
-      ui.addConversation = () => { };
+      ui.insertConversation = () => { };
     };
-  }, [nextMessage, addConversation, ui]);
+  }, [nextMessage, insertConversation, ui]);
 
   const messages = useMemo(() => state.conversation?.messages, [state]);
   const message = useMemo(() => messages?.at(state.index), [messages, state]);
 
-  useEffect(() => {
-    const numMessages = messages?.length.valueOf();
-    if (state.index >= numMessages) {
-      dispatch({ popConversation: true });
-    }
-  }, [messages, state, dispatch]);
+  // useEffect(() => {
+  //   const numMessages = messages?.length.valueOf();
+  //   if (state.index >= numMessages) {
+  //     dispatch({ popConversation: true });
+  //   }
+  // }, [messages, state, dispatch]);
 
   useEffect(() => {
     if (!state.conversation) {
