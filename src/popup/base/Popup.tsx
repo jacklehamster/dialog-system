@@ -2,15 +2,17 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
-import React, { CSSProperties, useEffect, useState } from 'react';
+import React, { CSSProperties, useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import './css/Popup.css';
+import { Layout } from './Layout';
+import { usePopupLayout } from './usePopupLayout';
+import { useGameContext } from '../context/Provider';
+import { useUniquePopupOnLayout } from './useUniquePopupOnLayout';
 
 interface Props {
+  popUid?: string;
   children: React.ReactNode;
-  position: [number, number];
-  size: [number | undefined, number | undefined];
-  positionFromRight?: boolean;
-  positionFromBottom?: boolean;
+  layout: Layout;
   fontSize: number | undefined;
   disabled?: boolean;
   hidden?: boolean;
@@ -39,36 +41,35 @@ const DOUBLE_BORDER_CSS: CSSProperties = {
 };
 
 const DOUBLE_BORDER_HEIGHT_OFFSET = 27;
-const DEFAULT_PADDING = 50;
 const DEFAULT_FONT_SIZE = 24;
 
 export function Popup({
+  popUid,
   children,
-  position: [x, y],
-  size: [width, height],
-  positionFromRight,
-  positionFromBottom,
+  layout,
   fontSize,
   disabled,
   hidden,
 }: Props) {
-  const [h, setH] = useState(10);
+  const [h, setH] = useState(0);
   useEffect(() => {
-    requestAnimationFrame(() => setH(hidden ? 0 : 100));
+    requestAnimationFrame(() => setH(hidden ? 10 : 100));
   }, [setH, hidden]);
+
+  const { top, left, right, bottom, width, height } = usePopupLayout({
+    layout,
+  });
+
+  const { visible } = useUniquePopupOnLayout({ layout, disabled });
 
   return !hidden && (
     <div
       className="pop-up"
       style={{
         position: 'absolute',
-        left: positionFromRight ? `calc(100% - ${x}px)` : x,
-        top: positionFromBottom ? `calc(100% - ${y}px)` : y,
-        right: DEFAULT_PADDING,
-        bottom: DEFAULT_PADDING,
-        width,
-        height,
+        left, top, right, bottom, width, height,
         fontSize: fontSize ?? DEFAULT_FONT_SIZE,
+        display: visible ? "": "none",
       }}
     >
       <div

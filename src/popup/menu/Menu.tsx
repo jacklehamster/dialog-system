@@ -4,7 +4,6 @@ import { MenuData } from './MenuData';
 import { UserInterface } from '../UserInterface';
 import { useMenu } from './useMenu';
 import { CSSProperties } from 'react';
-import { useGameContext } from '../context/Provider';
 
 interface Props {
   menuData: MenuData;
@@ -13,26 +12,14 @@ interface Props {
 }
 
 export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden } = useMenu({ menuData, ui, onDone });
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu({ menuData, ui, onDone });
   const layout = menuData?.layout ?? {};
 
-  const position: [number, number] = [
-    layout?.position?.[0] ?? 50,
-    layout?.position?.[1] ?? 50,
-  ];
-  const size: [number | undefined, number | undefined] = [
-    layout?.size?.[0],
-    layout?.size?.[1],
-  ];
-
-  const { popupControl } = useGameContext();
   return (
     <Popup
-      position={position}
-      size={size}
+      popUid={menuData.uid!}
+      layout={layout}
       fontSize={menuData.style?.fontSize}
-      positionFromBottom={!!menuData.layout}
-      positionFromRight={!!menuData.layout}
       disabled={disabled}
       hidden={hidden}
     >
@@ -62,9 +49,12 @@ export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
               };
               return (
                 <div key={index} style={style}
-                  onMouseMove={enableMenuHover}
+                  onMouseMove={() => {
+                    enableMenuHover();
+                    select(index);
+                  }}
                   onMouseOver={menuHoverEnabled ? () => select(index) : undefined}
-                  onClick={menuHoverEnabled && !item?.disabled ? () => popupControl.onAction() : undefined}>
+                  onClick={menuHoverEnabled && !item?.disabled ? () => onMenuAction(index) : undefined}>
                   {item?.label}
                 </div>
               );

@@ -11,27 +11,29 @@ export interface GameContextType {
   popupControl: PopupControl;
   topPopupUid: string;
   onSelection: (selection: number) => void;
+  layoutReplacementCallbacks: Record<string, () => void>;
 }
 
 export const DEFAULT_GAME_CONTEXT: GameContextType = {
-  addControlsLock: function (_uid: string): void {
+  addControlsLock(_uid: string): void {
     throw new Error('Function not implemented.');
   },
-  removeControlsLock: function (_uid: string): void {
+  removeControlsLock(_uid: string): void {
     throw new Error('Function not implemented.');
   },
-  openMenu: function (_value: MenuData): Promise<number> {
+  openMenu(_value: MenuData): Promise<number> {
     throw new Error('Function not implemented.');
   },
-  openDialog: function (_value: DialogData | undefined): Promise<void> {
+  openDialog(_value: DialogData | undefined): Promise<void> {
     throw new Error('Function not implemented.');
   },
   closePopup(): void {
     throw new Error('Function not implemented.');
   },
   topPopupUid: '',
-  onSelection(selection) {
+  onSelection(_selection) {
     throw new Error('Function not implemented');
   },
   popupControl: new PopupControl(),
+  layoutReplacementCallbacks: {},
 };

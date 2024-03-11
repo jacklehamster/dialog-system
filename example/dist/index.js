@@ -1,50 +1,82 @@
 // /Users/vincent/dialog-system/example/node_modules/dialog-system/dist/index.js
 var usePopupManager = function() {
   const [popups, setPopups] = import_react3.useState([]);
-  const topPopupUid = import_react3.useMemo(() => popups[popups.length - 1]?.uid ?? "", [popups]);
-  const addPopup = import_react3.useCallback((data) => setPopups((popups2) => {
-    return [...popups2, data];
-  }), [setPopups]);
-  const closePopup = import_react3.useCallback((uid) => {
-    setPopups((popups2) => {
-      if (!uid || uid === popups2[popups2.length - 1].uid) {
-        return popups2.slice(0, popups2.length - 1);
-      }
-      return popups2;
-    });
-  }, [setPopups]);
   return {
     popups,
-    addPopup,
-    closePopup,
-    topPopupUid
+    addPopup: import_react3.useCallback((data) => setPopups((popups2) => {
+      return [...popups2, data];
+    }), [setPopups]),
+    closePopup: import_react3.useCallback((uid) => {
+      setPopups((popups2) => {
+        if (!uid || uid === popups2[popups2.length - 1].uid) {
+          return popups2.slice(0, popups2.length - 1);
+        }
+        return popups2;
+      });
+    }, [setPopups]),
+    topPopupUid: import_react3.useMemo(() => popups[popups.length - 1]?.uid ?? "", [popups])
   };
 };
+var usePopupLayout = function({ layout }) {
+  const x = layout.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
+  const y = layout.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
+  const left = layout.positionFromRight ? `calc(100% - ${x}px)` : x;
+  const top = layout.positionFromBottom ? `calc(100% - ${y}px)` : y;
+  const right = DEFAULT_HORIZONTAL_PADDING;
+  const bottom = DEFAULT_VERTICAL_PADDING;
+  const width = layout.size?.[0];
+  const height = layout.size?.[1];
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width,
+    height
+  };
+};
+var useUniquePopupOnLayout = function({ layout, disabled }) {
+  const [visible, setVisible] = import_react4.useState(true);
+  const { layoutReplacementCallbacks } = useGameContext();
+  const hide = import_react4.useCallback(() => setVisible(false), [setVisible]);
+  import_react4.useLayoutEffect(() => {
+    const layoutUid = layout.uid;
+    if (layoutUid && !disabled) {
+      layoutReplacementCallbacks[layoutUid]?.();
+      layoutReplacementCallbacks[layoutUid] = hide;
+      setVisible(true);
+    }
+  }, [disabled, hide, layout, layoutReplacementCallbacks]);
+  return { visible };
+};
 var Popup2 = function({
+  popUid,
   children,
-  position: [x, y],
-  size: [width, height],
-  positionFromRight,
-  positionFromBottom,
+  layout,
   fontSize,
   disabled,
   hidden
 }) {
-  const [h, setH] = import_react4.useState(10);
-  import_react4.useEffect(() => {
-    requestAnimationFrame(() => setH(hidden ? 0 : 100));
+  const [h, setH] = import_react5.useState(0);
+  import_react5.useEffect(() => {
+    requestAnimationFrame(() => setH(hidden ? 10 : 100));
   }, [setH, hidden]);
+  const { top, left, right, bottom, width, height } = usePopupLayout({
+    layout
+  });
+  const { visible } = useUniquePopupOnLayout({ layout, disabled });
   return !hidden && jsx_dev_runtime2.jsxDEV("div", {
     className: "pop-up",
     style: {
       position: "absolute",
-      left: positionFromRight ? `calc(100% - ${x}px)` : x,
-      top: positionFromBottom ? `calc(100% - ${y}px)` : y,
-      right: DEFAULT_PADDING,
-      bottom: DEFAULT_PADDING,
+      left,
+      top,
+      right,
+      bottom,
       width,
       height,
-      fontSize: fontSize ?? DEFAULT_FONT_SIZE
+      fontSize: fontSize ?? DEFAULT_FONT_SIZE,
+      display: visible ? "" : "none"
     },
     children: jsx_dev_runtime2.jsxDEV("div", {
       style: {
@@ -68,9 +100,9 @@ var Popup2 = function({
 };
 var useControlsLock = function({ uid, listener }) {
   const { popupControl, addControlsLock, removeControlsLock, topPopupUid } = useGameContext();
-  const [locked, setLocked] = import_react5.useState(false);
+  const [locked, setLocked] = import_react6.useState(false);
   const lockState = topPopupUid === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
-  import_react5.useEffect(() => {
+  import_react6.useEffect(() => {
     if (lockState) {
       setLocked(true);
       popupControl.addListener(listener);
@@ -80,7 +112,7 @@ var useControlsLock = function({ uid, listener }) {
       };
     }
   }, [listener, setLocked, popupControl, lockState]);
-  import_react5.useEffect(() => {
+  import_react6.useEffect(() => {
     if (uid && locked) {
       addControlsLock(uid);
       return () => removeControlsLock(uid);
@@ -89,8 +121,8 @@ var useControlsLock = function({ uid, listener }) {
   return { lockState };
 };
 var useActions = function({ ui }) {
-  const registry = import_react6.useMemo(() => new ConversionRegistry, []);
-  const performActions = import_react6.useCallback(async (actions, state) => {
+  const registry = import_react7.useMemo(() => new ConversionRegistry, []);
+  const performActions = import_react7.useCallback(async (actions, state) => {
     for (const action of actions) {
       if (action) {
         const popActionFun = typeof action === "function" ? action : registry.convert(action);
@@ -99,14 +131,14 @@ var useActions = function({ ui }) {
     }
     return state;
   }, [ui, registry]);
-  import_react6.useEffect(() => {
+  import_react7.useEffect(() => {
     ui.performActions = performActions;
   }, [ui, performActions]);
   return { performActions };
 };
 var useDialog = function({ dialogData, ui, onDone }) {
   const { performActions } = useActions({ ui });
-  const [state, dispatch] = import_react7.useReducer(reducer, {
+  const [state, dispatch] = import_react8.useReducer(reducer, {
     conversations: [dialogData.conversation],
     indices: [0],
     get conversation() {
@@ -116,33 +148,36 @@ var useDialog = function({ dialogData, ui, onDone }) {
       return this.indices[this.indices.length - 1];
     }
   });
-  const nextMessage = import_react7.useCallback(() => dispatch({ nextMessage: true }), [dispatch]);
-  const insertConversation = import_react7.useCallback((newConversation) => {
-    dispatch({ newConversation });
+  const nextMessage = import_react8.useCallback(() => {
+    dispatch({ nextMessage: true });
   }, [dispatch]);
-  const { lockState } = useControlsLock({ uid: dialogData.uid, listener: { onAction: nextMessage } });
-  import_react7.useEffect(() => {
+  const { lockState } = useControlsLock({
+    uid: dialogData.uid,
+    listener: {
+      onAction: () => {
+        nextMessage();
+      }
+    }
+  });
+  import_react8.useEffect(() => {
     ui.nextMessage = nextMessage;
-    ui.insertConversation = insertConversation;
     return () => {
       ui.nextMessage = () => {
       };
-      ui.insertConversation = () => {
-      };
     };
-  }, [nextMessage, insertConversation, ui]);
-  const messages = import_react7.useMemo(() => state.conversation?.messages, [state]);
-  const message = import_react7.useMemo(() => messages?.at(state.index), [messages, state]);
-  import_react7.useEffect(() => {
+  }, [nextMessage, ui]);
+  const messages = import_react8.useMemo(() => state.conversation?.messages, [state]);
+  const message = import_react8.useMemo(() => messages?.at(state.index), [messages, state]);
+  import_react8.useEffect(() => {
     if (!state.conversation) {
       ui.closePopup(dialogData.uid);
       onDone();
     }
   }, [state, ui, onDone, dialogData]);
-  import_react7.useEffect(() => {
+  import_react8.useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      performActions(actions, {}).then(nextMessage);
+      performActions(actions, {}).then(() => nextMessage());
     }
   }, [message, performActions, dialogData, nextMessage]);
   return {
@@ -152,23 +187,11 @@ var useDialog = function({ dialogData, ui, onDone }) {
 };
 var Dialog = function({ dialogData, ui, onDone }) {
   const { text, disabled } = useDialog({ dialogData, ui, onDone });
-  const layout = dialogData.layout ?? {};
-  const position = [
-    layout?.position?.[0] ?? 0,
-    layout?.position?.[1] ?? 0
-  ];
-  const size = [
-    layout?.size?.[0],
-    layout?.size?.[1]
-  ];
-  const { positionFromRight, positionFromBottom } = layout;
   const { popupControl } = useGameContext();
   return jsx_dev_runtime3.jsxDEV(Popup2, {
-    position,
-    size,
+    popUid: dialogData.uid,
+    layout: dialogData.layout ?? {},
     fontSize: dialogData.style?.fontSize,
-    positionFromBottom,
-    positionFromRight,
     disabled,
     children: jsx_dev_runtime3.jsxDEV("div", {
       style: {
@@ -185,16 +208,16 @@ var Dialog = function({ dialogData, ui, onDone }) {
   }, undefined, false, undefined, this);
 };
 var useSelection = function({ menuData }) {
-  const [selectedIndex, setSelectedIndex] = import_react8.useState(0);
-  const [scroll, setScroll] = import_react8.useState(0);
+  const [selectedIndex, setSelectedIndex] = import_react9.useState(0);
+  const [scroll, setScroll] = import_react9.useState(0);
   const { onSelection } = useGameContext();
-  import_react8.useEffect(() => onSelection(selectedIndex), [selectedIndex, onSelection]);
-  const scrollDown = import_react8.useCallback(() => {
+  import_react9.useEffect(() => onSelection(selectedIndex), [selectedIndex, onSelection]);
+  const scrollDown = import_react9.useCallback(() => {
     const len = menuData.items.length.valueOf();
     setScroll((scroll2) => Math.min(len - (menuData.maxRows ?? len), scroll2 + 1));
   }, [setScroll, menuData]);
-  const scrollUp = import_react8.useCallback(() => setScroll((scroll2) => Math.max(0, scroll2 - 1)), [setScroll]);
-  import_react8.useEffect(() => {
+  const scrollUp = import_react9.useCallback(() => setScroll((scroll2) => Math.max(0, scroll2 - 1)), [setScroll]);
+  import_react9.useEffect(() => {
     if (menuData.maxRows) {
       if (selectedIndex - scroll >= menuData.maxRows) {
         scrollDown();
@@ -203,17 +226,17 @@ var useSelection = function({ menuData }) {
       }
     }
   }, [selectedIndex, scroll, menuData, scrollUp, scrollDown]);
-  const select = import_react8.useCallback((index) => {
+  const select = import_react9.useCallback((index) => {
     const len = menuData.items.length.valueOf();
     setSelectedIndex(Math.max(0, Math.min(index, len - 1)));
   }, [setSelectedIndex, menuData]);
-  const moveSelection = import_react8.useCallback((dy) => {
+  const moveSelection = import_react9.useCallback((dy) => {
     if (dy) {
       const len = menuData.items.length.valueOf();
       setSelectedIndex((index) => Math.max(0, Math.min(index + dy, len - 1)));
     }
   }, [setSelectedIndex, menuData]);
-  const selectedItem = import_react8.useMemo(() => menuData.items.at(selectedIndex), [menuData, selectedIndex]);
+  const selectedItem = import_react9.useMemo(() => menuData.items.at(selectedIndex), [menuData, selectedIndex]);
   return {
     select,
     moveSelection,
@@ -226,48 +249,48 @@ var useSelection = function({ menuData }) {
 var useMenu = function({ menuData, ui, onDone }) {
   const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
   const { performActions } = useActions({ ui });
-  const [menuHoverEnabled, setMenuHoverEnabled] = import_react9.useState(false);
-  const [hidden, setHidden] = import_react9.useState(false);
-  const listener = import_react9.useMemo(() => ({
-    onAction() {
-      if (selectedItem?.disabled) {
-        return;
-      }
-      const behavior = selectedItem?.behavior ?? MenuItemBehavior.CLOSE_ON_SELECT;
-      if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
+  const [menuHoverEnabled, setMenuHoverEnabled] = import_react10.useState(false);
+  const [hidden, setHidden] = import_react10.useState(false);
+  const onMenuAction = import_react10.useCallback((index) => {
+    const item = index !== undefined ? menuData.items.at(index) : selectedItem;
+    if (!item || item.disabled) {
+      return;
+    }
+    const behavior = item.behavior ?? MenuItemBehavior.CLOSE_ON_SELECT;
+    if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
+      ui.closePopup(menuData.uid);
+    }
+    if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+      setHidden(true);
+    }
+    const selectedAction = item.action;
+    const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
+    performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then((state) => {
+      if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
         ui.closePopup(menuData.uid);
       }
-      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
-        setHidden(true);
+      if (!state.keepMenu) {
+        onDone();
       }
-      const selectedAction = selectedItem?.action;
-      const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-      performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then((state) => {
-        if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
-          ui.closePopup(menuData.uid);
-        }
-        if (!state.keepMenu) {
-          onDone();
-        }
-        if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
-          setHidden(false);
-        }
-      });
-    },
-    onUp() {
-      setMenuHoverEnabled(false);
-      moveSelection(-1);
-    },
-    onDown() {
-      setMenuHoverEnabled(false);
-      moveSelection(1);
-    }
-  }), [menuData, moveSelection, selectedItem, performActions, setMenuHoverEnabled, setHidden]);
-  const { lockState } = useControlsLock({ uid: menuData.uid, listener });
-  const enableMenuHover = import_react9.useCallback(!menuHoverEnabled ? () => {
-    setMenuHoverEnabled(true);
-  } : () => {
-  }, [menuHoverEnabled]);
+      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+        setHidden(false);
+      }
+    });
+  }, [menuData, moveSelection, selectedItem, performActions, setMenuHoverEnabled, setHidden]);
+  const { lockState } = useControlsLock({
+    uid: menuData.uid,
+    listener: import_react10.useMemo(() => ({
+      onAction: onMenuAction,
+      onUp() {
+        setMenuHoverEnabled(false);
+        moveSelection(-1);
+      },
+      onDown() {
+        setMenuHoverEnabled(false);
+        moveSelection(1);
+      }
+    }), [moveSelection, setMenuHoverEnabled, onMenuAction])
+  });
   return {
     selectedItem,
     select,
@@ -276,28 +299,21 @@ var useMenu = function({ menuData, ui, onDone }) {
     scrollDown,
     disabled: lockState === LockStatus.LOCKED,
     menuHoverEnabled,
-    enableMenuHover,
-    hidden
+    enableMenuHover: import_react10.useCallback(!menuHoverEnabled ? () => {
+      setMenuHoverEnabled(true);
+    } : () => {
+    }, [menuHoverEnabled]),
+    hidden,
+    onMenuAction
   };
 };
 var Menu = function({ menuData, ui, onDone }) {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden } = useMenu({ menuData, ui, onDone });
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu({ menuData, ui, onDone });
   const layout = menuData?.layout ?? {};
-  const position = [
-    layout?.position?.[0] ?? 50,
-    layout?.position?.[1] ?? 50
-  ];
-  const size = [
-    layout?.size?.[0],
-    layout?.size?.[1]
-  ];
-  const { popupControl } = useGameContext();
   return jsx_dev_runtime4.jsxDEV(Popup2, {
-    position,
-    size,
+    popUid: menuData.uid,
+    layout,
     fontSize: menuData.style?.fontSize,
-    positionFromBottom: !!menuData.layout,
-    positionFromRight: !!menuData.layout,
     disabled,
     hidden,
     children: [
@@ -336,9 +352,12 @@ var Menu = function({ menuData, ui, onDone }) {
               };
               return jsx_dev_runtime4.jsxDEV("div", {
                 style,
-                onMouseMove: enableMenuHover,
+                onMouseMove: () => {
+                  enableMenuHover();
+                  select(index);
+                },
                 onMouseOver: menuHoverEnabled ? () => select(index) : undefined,
-                onClick: menuHoverEnabled && !item?.disabled ? () => popupControl.onAction() : undefined,
+                onClick: menuHoverEnabled && !item?.disabled ? () => onMenuAction(index) : undefined,
                 children: item?.label
               }, index, false, undefined, this);
             })
@@ -367,8 +386,8 @@ var Menu = function({ menuData, ui, onDone }) {
   }, undefined, true, undefined, this);
 };
 var PopupContainer = function({ popups, ui, onDone }) {
-  const [elemsMap, setElemsMap] = import_react10.useState({});
-  const registry = import_react10.useMemo(() => ({
+  const [elemsMap, setElemsMap] = import_react11.useState({});
+  const registry = import_react11.useMemo(() => ({
     dialog: (data, ui2, onDone2) => jsx_dev_runtime5.jsxDEV(Dialog, {
       dialogData: data,
       ui: ui2,
@@ -380,13 +399,13 @@ var PopupContainer = function({ popups, ui, onDone }) {
       onDone: onDone2
     }, data.uid, false, undefined, this)
   }), []);
-  const createElement = import_react10.useCallback((data) => {
+  const createElement = import_react11.useCallback((data) => {
     if (!data.type) {
       throw new Error(`Invalid data type: ${data.type}`);
     }
     return registry[data.type](data, ui, onDone);
   }, [ui, onDone, registry]);
-  import_react10.useEffect(() => {
+  import_react11.useEffect(() => {
     setElemsMap((elemsMap2) => {
       const newElemsMap = {};
       popups.forEach((data) => {
@@ -397,14 +416,14 @@ var PopupContainer = function({ popups, ui, onDone }) {
       return newElemsMap;
     });
   }, [popups, setElemsMap, createElement]);
-  const getRect = import_react10.useCallback(({ positionFromRight, positionFromBottom, position, size } = {}) => {
+  const getRect = import_react11.useCallback(({ positionFromRight, positionFromBottom, position, size } = {}) => {
     const x = positionFromRight ? position?.[0] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[0] ?? 0);
     const y = positionFromBottom ? position?.[1] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[1] ?? 0);
     const width = size?.[0] ?? Number.MAX_SAFE_INTEGER;
     const height = size?.[1] ?? Number.MAX_SAFE_INTEGER;
     return { x, y, width, height };
   }, []);
-  const elements = import_react10.useMemo(() => {
+  const elements = import_react11.useMemo(() => {
     const sortedPopups = [...popups];
     sortedPopups.sort((p1, p2) => {
       const r1 = getRect(p1.layout), r2 = getRect(p2.layout);
@@ -430,9 +449,10 @@ var unsafeStringify = function(arr, offset = 0) {
 };
 var PopupOverlay = function({ popupManager, popupControl }) {
   const { popups, addPopup, closePopup, topPopupUid } = usePopupManager();
-  const [selection, setSelection] = import_react11.useState(0);
-  const [, setOnDones] = import_react11.useState([]);
-  const gameContext = import_react11.useMemo(() => ({
+  const [selection, setSelection] = import_react12.useState(0);
+  const [, setOnDones] = import_react12.useState([]);
+  const layoutReplacementCallbacks = import_react12.useMemo(() => ({}), []);
+  const gameContext = import_react12.useMemo(() => ({
     addControlsLock: (uid) => popupManager.addControlsLock(uid),
     removeControlsLock: (uid) => popupManager.removeControlsLock(uid),
     openMenu: (data) => {
@@ -448,16 +468,18 @@ var PopupOverlay = function({ popupManager, popupControl }) {
     closePopup,
     popupControl,
     topPopupUid,
-    onSelection: setSelection
+    onSelection: setSelection,
+    layoutReplacementCallbacks
   }), [
     popupManager,
     popupControl,
     addPopup,
     closePopup,
     topPopupUid,
-    setSelection
+    setSelection,
+    layoutReplacementCallbacks
   ]);
-  import_react11.useEffect(() => {
+  import_react12.useEffect(() => {
     popupManager.openMenu = async (data) => {
       gameContext.openMenu(data);
       return new Promise((resolve) => setOnDones((onDones) => [...onDones, resolve]));
@@ -469,7 +491,7 @@ var PopupOverlay = function({ popupManager, popupControl }) {
     popupManager.closePopup = gameContext.closePopup;
     popupManager.selection = selection;
   }, [popupManager, gameContext, selection]);
-  const onDone = import_react11.useCallback(() => {
+  const onDone = import_react12.useCallback(() => {
     setOnDones((previousOnDones) => {
       const last = previousOnDones[previousOnDones.length - 1];
       last?.();
@@ -23963,7 +23985,7 @@ var require_client = __commonJS((exports) => {
   }
   var i;
 });
-var import_react11 = __toESM(require_react(), 1);
+var import_react12 = __toESM(require_react(), 1);
 var import_react2 = __toESM(require_react(), 1);
 var import_react = __toESM(require_react(), 1);
 
@@ -23992,26 +24014,27 @@ class PopupControl {
   }
 }
 var DEFAULT_GAME_CONTEXT = {
-  addControlsLock: function(_uid) {
+  addControlsLock(_uid) {
     throw new Error("Function not implemented.");
   },
-  removeControlsLock: function(_uid) {
+  removeControlsLock(_uid) {
     throw new Error("Function not implemented.");
   },
-  openMenu: function(_value) {
+  openMenu(_value) {
     throw new Error("Function not implemented.");
   },
-  openDialog: function(_value) {
+  openDialog(_value) {
     throw new Error("Function not implemented.");
   },
   closePopup() {
     throw new Error("Function not implemented.");
   },
   topPopupUid: "",
-  onSelection(selection) {
+  onSelection(_selection) {
     throw new Error("Function not implemented");
   },
-  popupControl: new PopupControl
+  popupControl: new PopupControl,
+  layoutReplacementCallbacks: {}
 };
 var Context = import_react.default.createContext(DEFAULT_GAME_CONTEXT);
 var Context_default = Context;
@@ -24055,15 +24078,16 @@ class PopupManager {
   }
   nextMessage() {
   }
-  insertConversation() {
-  }
   async performActions(_actions, state) {
     return {};
   }
   selection = 0;
 }
 var import_react3 = __toESM(require_react(), 1);
-var import_react10 = __toESM(require_react(), 1);
+var import_react11 = __toESM(require_react(), 1);
+var import_react5 = __toESM(require_react(), 1);
+var DEFAULT_HORIZONTAL_PADDING = 100;
+var DEFAULT_VERTICAL_PADDING = 50;
 var import_react4 = __toESM(require_react(), 1);
 var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
 var POPUP_CSS = {
@@ -24082,22 +24106,15 @@ var DOUBLE_BORDER_CSS = {
   cursor: "pointer"
 };
 var DOUBLE_BORDER_HEIGHT_OFFSET = 27;
-var DEFAULT_PADDING = 50;
 var DEFAULT_FONT_SIZE = 24;
-var import_react7 = __toESM(require_react(), 1);
-var import_react5 = __toESM(require_react(), 1);
+var import_react8 = __toESM(require_react(), 1);
+var import_react6 = __toESM(require_react(), 1);
 var LockStatus;
 (function(LockStatus2) {
   LockStatus2[LockStatus2["LOCKED"] = 0] = "LOCKED";
   LockStatus2[LockStatus2["UNLOCKED"] = 1] = "UNLOCKED";
 })(LockStatus || (LockStatus = {}));
-var import_react6 = __toESM(require_react(), 1);
-
-class InsertConversationConvertor {
-  convert(model) {
-    return (ui) => ui.insertConversation(model.insertConversation);
-  }
-}
+var import_react7 = __toESM(require_react(), 1);
 
 class OpenDialogConvertor {
   convert(model) {
@@ -24112,14 +24129,10 @@ class OpenMenuConvertor {
 }
 
 class ConversionRegistry {
-  #insertConversationConvertor = new InsertConversationConvertor;
   #openDialogConvertor = new OpenDialogConvertor;
   #openMenuConvertor = new OpenMenuConvertor;
   convert(model) {
-    const { insertConversation, dialog, menu } = model;
-    if (insertConversation) {
-      return this.#insertConversationConvertor.convert({ insertConversation });
-    }
+    const { dialog, menu } = model;
     if (dialog) {
       return this.#openDialogConvertor.convert({ dialog });
     }
@@ -24132,44 +24145,30 @@ class ConversionRegistry {
 }
 var reducer = function(state, action) {
   const { conversations, indices } = state;
-  if (state.index >= state.conversation.messages.length.valueOf() - 1) {
-    return {
-      conversations: conversations.slice(0, conversations.length - 1),
-      indices: indices.slice(0, indices.length - 1),
-      get conversation() {
-        return this.conversations[this.conversations.length - 1];
-      },
-      get index() {
-        return this.indices[this.indices.length - 1];
-      }
-    };
-  }
   if (action.nextMessage) {
-    return {
-      conversations,
-      indices: [...indices.slice(0, indices.length - 1), indices[indices.length - 1] + 1],
-      get conversation() {
-        return this.conversations[this.conversations.length - 1];
-      },
-      get index() {
-        return this.indices[this.indices.length - 1];
-      }
-    };
-  } else if (action.newConversation) {
-    return {
-      conversations: [...conversations, action.newConversation],
-      indices: [
-        ...indices.slice(indices.length - 1),
-        indices[indices.length - 1] + 1,
-        0
-      ],
-      get conversation() {
-        return this.conversations[this.conversations.length - 1];
-      },
-      get index() {
-        return this.indices[this.indices.length - 1];
-      }
-    };
+    if (state.index >= state.conversation.messages.length.valueOf() - 1) {
+      return {
+        conversations: conversations.slice(0, conversations.length - 1),
+        indices: indices.slice(0, indices.length - 1),
+        get conversation() {
+          return this.conversations[this.conversations.length - 1];
+        },
+        get index() {
+          return this.indices[this.indices.length - 1];
+        }
+      };
+    } else {
+      return {
+        conversations,
+        indices: [...indices.slice(0, indices.length - 1), indices[indices.length - 1] + 1],
+        get conversation() {
+          return this.conversations[this.conversations.length - 1];
+        },
+        get index() {
+          return this.indices[this.indices.length - 1];
+        }
+      };
+    }
   } else if (action.popConversation) {
     return {
       conversations: conversations.slice(0, conversations.length - 1),
@@ -24250,8 +24249,8 @@ var z = function(u, j, p = []) {
   }
   return f;
 };
+var import_react10 = __toESM(require_react(), 1);
 var import_react9 = __toESM(require_react(), 1);
-var import_react8 = __toESM(require_react(), 1);
 var MenuItemBehavior;
 (function(MenuItemBehavior2) {
   MenuItemBehavior2[MenuItemBehavior2["NONE"] = 0] = "NONE";
@@ -24301,6 +24300,7 @@ var STYLE = {
 // src/index.tsx
 var openTestDialogAction = { dialog: {
   layout: {
+    uid: "main-dialog",
     position: [50, 200],
     positionFromBottom: true
   },
@@ -24337,11 +24337,20 @@ var openTestDialogAction = { dialog: {
             },
             {
               label: "good",
-              action: { insertConversation: {
-                messages: [
-                  { text: "That's nice to know!" }
-                ]
-              } }
+              action: {
+                dialog: {
+                  layout: {
+                    uid: "main-dialog",
+                    position: [50, 200],
+                    positionFromBottom: true
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "That's nice to know!" }
+                    ]
+                  }
+                }
+              }
             },
             {
               label: "bad",

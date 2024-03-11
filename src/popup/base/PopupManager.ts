@@ -35,8 +35,6 @@ export class PopupManager implements UserInterface {
   }
   nextMessage(): void {
   }
-  insertConversation(): void {
-  }
   async performActions(_actions: (PopAction | undefined)[], state: PopState): Promise<PopState> {
     return {};
   }

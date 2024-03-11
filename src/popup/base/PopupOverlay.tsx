@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Provider } from '../context/Provider';
 import { PopupManager } from './PopupManager';
 import { GameContextType } from '../context/GameContextType';
@@ -18,6 +18,8 @@ export function PopupOverlay({ popupManager, popupControl }: Props) {
   const { popups, addPopup, closePopup, topPopupUid } = usePopupManager();
   const [selection, setSelection] = useState(0);
   const [, setOnDones] = useState<(() => void)[]>([]);
+  const layoutReplacementCallbacks = useMemo<Record<string, () => void>>(() => ({
+  }), []);
 
   const gameContext: GameContextType = useMemo<GameContextType>(
     () => ({
@@ -37,6 +39,7 @@ export function PopupOverlay({ popupManager, popupControl }: Props) {
       popupControl,
       topPopupUid,
       onSelection: setSelection,
+      layoutReplacementCallbacks,
     }),
     [
       popupManager,
@@ -45,6 +48,7 @@ export function PopupOverlay({ popupManager, popupControl }: Props) {
       closePopup,
       topPopupUid,
       setSelection,
+      layoutReplacementCallbacks,
     ],
   );
 

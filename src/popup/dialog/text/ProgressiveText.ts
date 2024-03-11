@@ -1,11 +1,14 @@
-import { ProgressiveTextProps } from "./ProgressiveTextProps";
-
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       'progressive-text': ProgressiveTextProps;
     }
   }
+}
+
+export interface ProgressiveTextProps extends React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> {
+  period?: number | string;
+  onCharacter?: () => void;
 }
 
 export class ProgressiveText extends HTMLElement {

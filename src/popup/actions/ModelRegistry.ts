@@ -1,4 +1,5 @@
-import { Layout, Style } from "../base/PopupData";
+import { Style } from "../base/PopupData";
+import { Layout } from "../base/Layout";
 import { Conversation } from "../dialog/Conversation";
 import { DialogData } from "../dialog/DialogData";
 import { MenuData } from "../menu/MenuData";

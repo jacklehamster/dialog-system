@@ -3,6 +3,7 @@ import { attachPopup, MenuItemBehavior } from "dialog-system";
 
 const openTestDialogAction: PopActionModel = { dialog: {
   layout: {
+    uid: "main-dialog",
     position: [50, 200],
     positionFromBottom: true,  
   },
@@ -39,11 +40,20 @@ const openTestDialogAction: PopActionModel = { dialog: {
             },
             {
               label: "good",
-              action: { insertConversation: {
-                messages: [
-                  { text: "That's nice to know!" },
-                ],
-              }},
+              action: { 
+                dialog: {
+                  layout: {
+                    uid: "main-dialog",
+                    position: [50, 200],
+                    positionFromBottom: true,  
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "That's nice to know!" },
+                    ],
+                  },
+                },
+              },
             },
             {
               label: "bad",

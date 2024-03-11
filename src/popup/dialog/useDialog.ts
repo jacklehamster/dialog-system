@@ -17,9 +17,9 @@ interface Result {
 }
 
 interface ReducerAction {
-  newConversation?: Conversation;
   popConversation?: boolean;
   nextMessage?: boolean;
+  onDone?: () => void;
 }
 
 interface ReducerState {
@@ -31,43 +31,29 @@ interface ReducerState {
 
 function reducer(state: ReducerState, action: ReducerAction) {
   const { conversations, indices } = state;
-  if (state.index >= state.conversation.messages.length.valueOf() - 1) {
-    return {
-      conversations: conversations.slice(0, conversations.length - 1),
-      indices: indices.slice(0, indices.length - 1),
-      get conversation() {
-        return this.conversations[this.conversations.length - 1];
-      },
-      get index() {
-        return this.indices[this.indices.length - 1];
-      },
-    };
-  }
   if (action.nextMessage) {
-    return {
-      conversations,
-      indices: [...indices.slice(0, indices.length - 1), indices[indices.length - 1] + 1],
-      get conversation() {
-        return this.conversations[this.conversations.length - 1];
-      },
-      get index() {
-        return this.indices[this.indices.length - 1];
-      },
-    }
-  } else if (action.newConversation) {
-    return {
-      conversations: [...conversations, action.newConversation],
-      indices: [
-        ...indices.slice(indices.length - 1),
-        indices[indices.length - 1] + 1,
-        0,
-      ],
-      get conversation() {
-        return this.conversations[this.conversations.length - 1];
-      },
-      get index() {
-        return this.indices[this.indices.length - 1];
-      },
+    if (state.index >= state.conversation.messages.length.valueOf() - 1) {
+      return {
+        conversations: conversations.slice(0, conversations.length - 1),
+        indices: indices.slice(0, indices.length - 1),
+        get conversation() {
+          return this.conversations[this.conversations.length - 1];
+        },
+        get index() {
+          return this.indices[this.indices.length - 1];
+        },
+      };
+    } else {
+      return {
+        conversations,
+        indices: [...indices.slice(0, indices.length - 1), indices[indices.length - 1] + 1],
+        get conversation() {
+          return this.conversations[this.conversations.length - 1];
+        },
+        get index() {
+          return this.indices[this.indices.length - 1];
+        },
+      }
     }
   } else if (action.popConversation) {
     return {
@@ -97,30 +83,26 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
     },
   });
 
-  const nextMessage = useCallback(() => dispatch({ nextMessage: true }), [dispatch]);
-  const insertConversation = useCallback((newConversation: Conversation) => {
-    dispatch({ newConversation })
+  const nextMessage = useCallback(() => {
+    dispatch({ nextMessage: true });
   }, [dispatch]);
-  const { lockState } = useControlsLock({ uid: dialogData.uid, listener: { onAction: nextMessage } });
+  const { lockState } = useControlsLock({
+    uid: dialogData.uid, listener: {
+      onAction: () => {
+        nextMessage();
+      }
+    }
+  });
 
   useEffect(() => {
     ui.nextMessage = nextMessage;
-    ui.insertConversation = insertConversation;
     return () => {
       ui.nextMessage = () => { };
-      ui.insertConversation = () => { };
     };
-  }, [nextMessage, insertConversation, ui]);
+  }, [nextMessage, ui]);
 
   const messages = useMemo(() => state.conversation?.messages, [state]);
   const message = useMemo(() => messages?.at(state.index), [messages, state]);
-
-  // useEffect(() => {
-  //   const numMessages = messages?.length.valueOf();
-  //   if (state.index >= numMessages) {
-  //     dispatch({ popConversation: true });
-  //   }
-  // }, [messages, state, dispatch]);
 
   useEffect(() => {
     if (!state.conversation) {
@@ -132,7 +114,7 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      performActions(actions, {}).then(nextMessage);
+      performActions(actions, {}).then(() => nextMessage());
     }
   }, [message, performActions, dialogData, nextMessage]);
 

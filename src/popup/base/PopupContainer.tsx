@@ -30,7 +30,6 @@ export function PopupContainer({ popups, ui, onDone }: Props) {
     [ui, onDone, registry],
   );
 
-
   useEffect(() => {
     setElemsMap((elemsMap) => {
       const newElemsMap: Record<string, JSX.Element> = {};
