@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
 import { DialogData } from "./DialogData";
 import { LockStatus, useControlsLock } from "../controls/useControlsLock";
 import { UserInterface } from "../UserInterface";
-import { useActions } from "../actions/useActions";
 import { Conversation } from "./Conversation";
+import { useGameContext } from "../context/Provider";
 
 interface Props {
   dialogData: DialogData;
@@ -71,14 +71,13 @@ function reducer(state: ReducerState, action: ReducerAction) {
 }
 
 export function useDialog({ dialogData, ui, onDone }: Props): Result {
-  const { performActions } = useActions({ ui });
   const [state, dispatch] = useReducer(reducer, {
     conversations: [dialogData.conversation],
     indices: [0],
     get conversation() {
       return this.conversations[this.conversations.length - 1];
     },
-    get index() {
+    get index(): number {
       return this.indices[this.indices.length - 1];
     },
   });
@@ -103,20 +102,21 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
 
   const messages = useMemo(() => state.conversation?.messages, [state]);
   const message = useMemo(() => messages?.at(state.index), [messages, state]);
+  const { closePopup } = useGameContext();
 
   useEffect(() => {
     if (!state.conversation) {
-      ui.closePopup(dialogData.uid);
+      closePopup(dialogData.uid);
       onDone();
     }
-  }, [state, ui, onDone, dialogData]);
+  }, [state, onDone, dialogData, closePopup]);
 
   useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      performActions(actions, {}).then(() => nextMessage());
+      ui.performActions(actions, {}).then(() => nextMessage());
     }
-  }, [message, performActions, dialogData, nextMessage]);
+  }, [message, ui, dialogData, nextMessage]);
 
   return {
     text: message?.text,

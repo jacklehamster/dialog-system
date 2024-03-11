@@ -1,24 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ElemData } from './usePopupManager';
-import { Dialog } from '../dialog/Dialog';
-import { Menu } from '../menu/Menu';
 import { UserInterface } from '../UserInterface';
 import { PopupData } from './PopupData';
-import { DialogData } from '../dialog/DialogData';
-import { MenuData } from '../menu/MenuData';
 
 interface Props {
   popups: ElemData[];
   ui: UserInterface;
   onDone(): void;
+  registry: Record<string, (data: ElemData, ui: UserInterface, onDone: ()=> void) => JSX.Element>;
 }
 
-export function PopupContainer({ popups, ui, onDone }: Props) {
+export function PopupContainer({ popups, ui, onDone, registry }: Props) {
   const [elemsMap, setElemsMap] = useState<Record<string, JSX.Element>>({});
-  const registry: Record<string, (data: ElemData, ui: UserInterface, onDone: ()=> void) => JSX.Element> = useMemo(() => ({
-      dialog:  (data, ui, onDone) => <Dialog key={data.uid} dialogData={data as DialogData} ui={ui} onDone={onDone} />,
-      menu: (data, ui, onDone) => <Menu key={data.uid} menuData={data as MenuData} ui={ui} onDone={onDone} />,
-  }), []);
 
   const createElement = useCallback<(data: ElemData) => JSX.Element>(
     (data) => {

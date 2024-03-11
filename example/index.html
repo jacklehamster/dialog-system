@@ -29,14 +29,14 @@
 
     window.startDialog = () => {
       document.getElementById('start-over').disabled = true;
-      const startMenuAction = ui => ui.openMenu({
+      const startMenuAction = { menu: {
         items: [
           { label: "Test", action: openTestDialogAction, behavior: MenuItemBehavior.HIDE_ON_SELECT },
           { label: "Exit" },
         ],
-      });
+      } };
       setTimeout(async () => {
-        await startMenuAction(ui);
+        await ui.performActions(startMenuAction);
         document.getElementById('start-over').disabled = false;
       }, 100);
     };

@@ -5,12 +5,11 @@ import { PopAction } from "./actions/PopAction";
 import { PopState } from "./actions/PopState";
 
 export interface UserInterface {
-  performActions(actions: (PopAction | undefined)[], state: PopState): Promise<PopState>;
+  performActions(actions: PopAction | (PopAction | undefined)[], state: PopState): Promise<PopState>;
   openMenu(menu: MenuData): Promise<void>;
   openDialog(dialog: DialogData): Promise<void>;
-  closePopup(uid?: string): void;
+  closePopup(): void;
   nextMessage(): void;
-  get selection(): number;
   addDialogListener(listener: PopupListener): void;
   removeDialogListener(listener: PopupListener): void;
 }

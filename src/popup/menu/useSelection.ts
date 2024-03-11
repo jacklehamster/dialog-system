@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MenuData } from "./MenuData";
-import { useGameContext } from "../context/Provider";
 
 interface Props {
   menuData: MenuData;
@@ -9,9 +8,6 @@ interface Props {
 export function useSelection({ menuData }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scroll, setScroll] = useState(0);
-  const { onSelection } = useGameContext();
-
-  useEffect(() => onSelection(selectedIndex), [selectedIndex, onSelection]);
 
   const scrollDown = useCallback(() => {
     const len = menuData.items.length.valueOf();

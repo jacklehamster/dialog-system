@@ -11,7 +11,8 @@ interface Props {
 export function useActions({ ui }: Props) {
   const registry = useMemo(() => new ConversionRegistry(), []);
 
-  const performActions = useCallback(async (actions: (PopAction | undefined)[], state: PopState) => {
+  const performActions = useCallback(async (oneOrMoreActions: PopAction | (PopAction | undefined)[], state: PopState) => {
+    const actions = Array.isArray(oneOrMoreActions) ? oneOrMoreActions : [oneOrMoreActions];
     for (const action of actions) {
       if (action) {
         const popActionFun = typeof (action) === "function" ? action : registry.convert(action);
@@ -20,10 +21,6 @@ export function useActions({ ui }: Props) {
     }
     return state;
   }, [ui, registry]);
-
-  useEffect(() => {
-    ui.performActions = performActions;
-  }, [ui, performActions]);
 
   return { performActions };
 }

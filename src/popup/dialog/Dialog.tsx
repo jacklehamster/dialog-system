@@ -2,8 +2,8 @@ import { Popup } from '../base/Popup';
 import { DialogData } from './DialogData';
 import { useDialog } from './useDialog';
 import { UserInterface } from '../UserInterface';
-import './text/ProgressiveText';
 import { useGameContext } from '../context/Provider';
+import './text/ProgressiveText';
 
 interface Props {
   dialogData: DialogData;

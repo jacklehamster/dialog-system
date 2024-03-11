@@ -38,5 +38,4 @@ export class PopupManager implements UserInterface {
   async performActions(_actions: (PopAction | undefined)[], state: PopState): Promise<PopState> {
     return {};
   }
-  selection: number = 0;
 }
