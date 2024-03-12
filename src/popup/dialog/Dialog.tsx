@@ -4,6 +4,7 @@ import { useDialog } from './useDialog';
 import { UserInterface } from '../UserInterface';
 import { useGameContext } from '../context/Provider';
 import './text/ProgressiveText';
+import { useUniquePopupOnLayout } from '../base/useUniquePopupOnLayout';
 
 interface Props {
   dialogData: DialogData;
@@ -13,14 +14,17 @@ interface Props {
 
 export function Dialog({ dialogData, ui, onDone }: Props): JSX.Element {
   const { text, disabled } = useDialog({ dialogData, ui, onDone });
-
+  const layout = dialogData.layout ?? {};
   const { popupControl } = useGameContext();
+  const { visible } = useUniquePopupOnLayout({ layout, disabled });
 
   return (
     <Popup popUid={dialogData.uid!}
       layout={dialogData.layout ?? {}}
       fontSize={dialogData.style?.fontSize}
       disabled={disabled}
+      displayNone={!visible}
+      onDone={onDone}
     >
       <div style={{
         padding: 10,

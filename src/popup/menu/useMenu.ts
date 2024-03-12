@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { UserInterface } from "../UserInterface";
 import { MenuData } from "./MenuData";
 import { useSelection } from "./useSelection";
 import { MenuItem } from "./MenuItem";
-import { MenuItemBehavior } from '../menu/MenuItemBehavior';
+import { MenuItemBehavior, MenuItemBehaviorDefault } from '../menu/MenuItemBehavior';
 import { LockStatus, useControlsLock } from "../controls/useControlsLock";
 import { PopupControlListener } from "../controls/PopupControlListener";
 import { useGameContext } from "../context/Provider";
@@ -35,10 +35,10 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
 
   const onMenuAction = useCallback((index?: number) => {
     const item = index !== undefined ? menuData.items.at(index) : selectedItem;
-    if (!item || item.disabled) {
+    if (!item) {
       return;
     }
-    const behavior = item.behavior ?? MenuItemBehavior.CLOSE_ON_SELECT;
+    const behavior = item.behavior ?? MenuItemBehaviorDefault;
     if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
       closePopup(menuData.uid);
     }

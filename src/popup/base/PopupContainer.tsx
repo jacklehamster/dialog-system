@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ElemData } from './usePopupManager';
+import { ElemData } from './usePopups';
 import { UserInterface } from '../UserInterface';
 import { PopupData } from './PopupData';
 

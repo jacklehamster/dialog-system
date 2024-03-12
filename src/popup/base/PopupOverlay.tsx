@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Provider } from '../context/Provider';
 import { PopupManager } from './PopupManager';
 import { GameContextType } from '../context/GameContextType';
-import { ElemData, usePopupManager } from './usePopupManager';
+import { ElemData, usePopups } from './usePopups';
 import { PopupContainer } from './PopupContainer';
 import { v4 as uuidv4 } from 'uuid';
 import { PopupControl } from '../controls/PopupControl';
@@ -18,10 +18,11 @@ interface Props {
 }
 
 export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_REGISTRY }: Props) {
-  const { popups, addPopup, closePopup, topPopupUid } = usePopupManager();
+  const { popups, addPopup, closePopup, topPopupUid } = usePopups();
   const [, setOnDones] = useState<(() => void)[]>([]);
   const layoutReplacementCallbacks = useMemo<Record<string, () => void>>(() => ({
   }), []);
+  const [forcedTopPopupUid, setForcedTopPopupUid] = useState<string>();
 
   const gameContext: GameContextType = useMemo<GameContextType>(
     () => ({
@@ -31,6 +32,8 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
       popupControl,
       topPopupUid,
       layoutReplacementCallbacks,
+      forcedTopPopupUid,
+      setForcedTopPopupUid,
     }),
     [
       popupManager,
@@ -39,6 +42,8 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
       closePopup,
       topPopupUid,
       layoutReplacementCallbacks,
+      forcedTopPopupUid,
+      setForcedTopPopupUid,
     ],
   );
 
@@ -69,7 +74,9 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
     popupManager.performActions = performActions;
   }, [popupManager, performActions]);
 
-
+  useEffect(() => {
+    popupManager.popups = popups;
+  }, [popupManager, popups]);
 
   const onDone = useCallback(() => {
     setOnDones((previousOnDones) => {

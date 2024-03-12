@@ -4,3 +4,5 @@ export enum MenuItemBehavior {
   CLOSE_AFTER_SELECT,
   HIDE_ON_SELECT,
 }
+
+export const MenuItemBehaviorDefault = MenuItemBehavior.NONE;

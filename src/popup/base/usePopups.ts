@@ -4,15 +4,13 @@ import { MenuData } from "../menu/MenuData";
 
 export type ElemData = DialogData | MenuData;
 
-export function usePopupManager() {
+export function usePopups() {
   const [popups, setPopups] = useState<ElemData[]>([]);
 
   return {
     popups,
     addPopup: useCallback(
-      (data: ElemData) => setPopups((popups) => {
-        return [...popups, data];
-      }),
+      (data: ElemData) => setPopups((popups) => ([...popups, data])),
       [setPopups],
     ),
     closePopup: useCallback(

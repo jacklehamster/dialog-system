@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useReducer, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DialogData } from "./DialogData";
 import { LockStatus, useControlsLock } from "../controls/useControlsLock";
 import { UserInterface } from "../UserInterface";
-import { Conversation } from "./Conversation";
 import { useGameContext } from "../context/Provider";
+import { useReplaceUiMethod } from "../base/useReplaceUiMethods";
 
 interface Props {
   dialogData: DialogData;
@@ -16,75 +16,7 @@ interface Result {
   disabled: boolean;
 }
 
-interface ReducerAction {
-  popConversation?: boolean;
-  nextMessage?: boolean;
-  onDone?: () => void;
-}
-
-interface ReducerState {
-  conversations: Conversation[];
-  indices: number[];
-  get conversation(): Conversation;
-  get index(): number;
-}
-
-function reducer(state: ReducerState, action: ReducerAction) {
-  const { conversations, indices } = state;
-  if (action.nextMessage) {
-    if (state.index >= state.conversation.messages.length.valueOf() - 1) {
-      return {
-        conversations: conversations.slice(0, conversations.length - 1),
-        indices: indices.slice(0, indices.length - 1),
-        get conversation() {
-          return this.conversations[this.conversations.length - 1];
-        },
-        get index() {
-          return this.indices[this.indices.length - 1];
-        },
-      };
-    } else {
-      return {
-        conversations,
-        indices: [...indices.slice(0, indices.length - 1), indices[indices.length - 1] + 1],
-        get conversation() {
-          return this.conversations[this.conversations.length - 1];
-        },
-        get index() {
-          return this.indices[this.indices.length - 1];
-        },
-      }
-    }
-  } else if (action.popConversation) {
-    return {
-      conversations: conversations.slice(0, conversations.length - 1),
-      indices: indices.slice(0, indices.length - 1),
-      get conversation() {
-        return this.conversations[this.conversations.length - 1];
-      },
-      get index() {
-        return this.indices[this.indices.length - 1];
-      },
-    };
-  }
-  return state;
-}
-
 export function useDialog({ dialogData, ui, onDone }: Props): Result {
-  const [state, dispatch] = useReducer(reducer, {
-    conversations: [dialogData.conversation],
-    indices: [0],
-    get conversation() {
-      return this.conversations[this.conversations.length - 1];
-    },
-    get index(): number {
-      return this.indices[this.indices.length - 1];
-    },
-  });
-
-  const nextMessage = useCallback(() => {
-    dispatch({ nextMessage: true });
-  }, [dispatch]);
   const { lockState } = useControlsLock({
     uid: dialogData.uid, listener: {
       onAction: () => {
@@ -92,34 +24,43 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
       }
     }
   });
+  const disabled = lockState === LockStatus.LOCKED;
 
-  useEffect(() => {
-    ui.nextMessage = nextMessage;
-    return () => {
-      ui.nextMessage = () => { };
-    };
-  }, [nextMessage, ui]);
+  const [index, setIndex] = useState(0);
+  const nextMessage = useCallback((idx: number = 1) => {
+    setIndex(index => index + idx);
+  }, [setIndex]);
+  const previousMessage = useCallback((idx: number = 1) => {
+    setIndex(index => index - idx);
+  }, [setIndex]);
 
-  const messages = useMemo(() => state.conversation?.messages, [state]);
-  const message = useMemo(() => messages?.at(state.index), [messages, state]);
+  useReplaceUiMethod({ ui, methodName: "nextMessage", method: nextMessage });
+  useReplaceUiMethod({ ui, methodName: "previousMessage", method: previousMessage });
+
+  const messages = useMemo(() => dialogData.conversation?.messages, [dialogData]);
+  const message = useMemo(() => messages?.at(index), [messages, index]);
   const { closePopup } = useGameContext();
 
   useEffect(() => {
-    if (!state.conversation) {
+    if (!message) {
       closePopup(dialogData.uid);
       onDone();
     }
-  }, [state, onDone, dialogData, closePopup]);
+  }, [dialogData, onDone, message, closePopup]);
 
   useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      ui.performActions(actions, {}).then(() => nextMessage());
+      ui.performActions(actions, {}).then(state => {
+        if (!state.stayOnMessage) {
+          nextMessage();
+        }
+      });
     }
   }, [message, ui, dialogData, nextMessage]);
 
   return {
     text: message?.text,
-    disabled: lockState === LockStatus.LOCKED,
+    disabled,
   };
 }

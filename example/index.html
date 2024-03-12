@@ -25,6 +25,7 @@
     import { attachPopup, MenuItemBehavior, openTestDialogAction } from './dist/index.js';
     const { ui, popupControl, detach } = attachPopup(document.getElementById("root"));
     window.popupControl = popupControl;
+    window.ui = ui;
     window.detach = detach;
 
     window.startDialog = () => {
@@ -32,7 +33,7 @@
       const startMenuAction = { menu: {
         items: [
           { label: "Test", action: openTestDialogAction, behavior: MenuItemBehavior.HIDE_ON_SELECT },
-          { label: "Exit" },
+          { label: "Exit", behavior: MenuItemBehavior.CLOSE_ON_SELECT },
         ],
       } };
       setTimeout(async () => {
@@ -69,6 +70,7 @@
           }
           break;
       }
+      e.preventDefault();
     });
   </script>
 </html>

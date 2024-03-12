@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useGameContext } from "../context/Provider";
 import { Layout } from "./Layout";
 
@@ -11,7 +11,7 @@ export function useUniquePopupOnLayout({ layout, disabled }: Props) {
   const [visible, setVisible] = useState(true);
   const { layoutReplacementCallbacks } = useGameContext();
   const hide = useCallback(() => setVisible(false), [setVisible]);
-  useLayoutEffect(() => {
+  useEffect(() => {
     const layoutUid = layout.uid;
     if (layoutUid && !disabled) {
       layoutReplacementCallbacks[layoutUid]?.();

@@ -1,5 +1,3 @@
-import { MenuData } from '../menu/MenuData';
-import { DialogData } from '../dialog/DialogData';
 import { PopupControl } from '../controls/PopupControl';
 
 export interface GameContextType {

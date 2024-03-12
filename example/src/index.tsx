@@ -40,6 +40,7 @@ const openTestDialogAction: PopActionModel = { dialog: {
             },
             {
               label: "good",
+              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
               action: { 
                 dialog: {
                   layout: {
@@ -57,6 +58,7 @@ const openTestDialogAction: PopActionModel = { dialog: {
             },
             {
               label: "bad",
+              behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
               action: [
                 { dialog: {
                   layout: {
@@ -73,9 +75,9 @@ const openTestDialogAction: PopActionModel = { dialog: {
             },
             {
               label: "----",
-              disabled: true,
             },
             {
+              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
               label: "bye",
             },
           ],

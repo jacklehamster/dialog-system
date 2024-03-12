@@ -6,8 +6,6 @@ import React, { CSSProperties, useCallback, useEffect, useLayoutEffect, useState
 import './css/Popup.css';
 import { Layout } from './Layout';
 import { usePopupLayout } from './usePopupLayout';
-import { useGameContext } from '../context/Provider';
-import { useUniquePopupOnLayout } from './useUniquePopupOnLayout';
 
 interface Props {
   popUid?: string;
@@ -16,6 +14,8 @@ interface Props {
   fontSize: number | undefined;
   disabled?: boolean;
   hidden?: boolean;
+  displayNone?: boolean;
+  onDone(): void;
 }
 
 //  Hack until I get proper CSS to work
@@ -29,6 +29,7 @@ const POPUP_CSS: CSSProperties = {
   borderRadius: 12,
   padding: 3,
   boxShadow: '10px 10px 0px #000000cc',
+  transition: 'outline-color .3s',
 };
 
 const DOUBLE_BORDER_CSS: CSSProperties = {
@@ -38,18 +39,20 @@ const DOUBLE_BORDER_CSS: CSSProperties = {
   color: 'white',
   padding: 10,
   cursor: 'pointer',
+  transition: 'border-color .3s',
 };
 
 const DOUBLE_BORDER_HEIGHT_OFFSET = 27;
 const DEFAULT_FONT_SIZE = 24;
 
 export function Popup({
-  popUid,
   children,
   layout,
   fontSize,
   disabled,
   hidden,
+  displayNone,
+  onDone,
 }: Props) {
   const [h, setH] = useState(0);
   useEffect(() => {
@@ -60,25 +63,24 @@ export function Popup({
     layout,
   });
 
-  const { visible } = useUniquePopupOnLayout({ layout, disabled });
-
   return !hidden && (
     <div
-      className="pop-up"
       style={{
         position: 'absolute',
         left, top, right, bottom, width, height,
         fontSize: fontSize ?? DEFAULT_FONT_SIZE,
-        display: visible ? "": "none",
+        display: displayNone ? "none": "",
       }}
     >
       <div
-        style={{
+      className="pop-up"
+      style={{
           ...POPUP_CSS,
           width: '100%',
           height: `${h}%`,
           overflow: 'hidden',
           transition: 'height .2s',
+          outlineColor: disabled ? "whitesmoke" : "white",
         }}
       >
         <div
@@ -87,6 +89,8 @@ export function Popup({
             ...DOUBLE_BORDER_CSS,
             height: `calc(100% - ${DOUBLE_BORDER_HEIGHT_OFFSET}px)`,
             pointerEvents: disabled ? 'none' : undefined,
+            borderColor: disabled ? "silver" : "white",
+            color: disabled ? "whitesmoke" : "white",
           }}
         >
           {children}

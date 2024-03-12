@@ -4,19 +4,20 @@ import { DialogData } from '../dialog/DialogData';
 import { MenuData } from '../menu/MenuData';
 import { PopAction } from '../actions/PopAction';
 import { PopState } from '../actions/PopState';
+import { ElemData } from './usePopups';
 
 export class PopupManager implements UserInterface {
-  #popupUids: string[] = [];
+  #lockUids: string[] = [];
   #listeners: Set<PopupListener> = new Set();
 
   addControlsLock(uid: string): void {
-    this.#popupUids.push(uid);
-    this.#listeners.forEach(listener => listener.onPopup(this.#popupUids.length));
+    this.#lockUids.push(uid);
+    this.#listeners.forEach(listener => listener.onPopup(this.#lockUids.length));
   }
 
   removeControlsLock(uid: string): void {
-    this.#popupUids = this.#popupUids.filter(id => id !== uid);
-    this.#listeners.forEach(listener => listener.onPopup(this.#popupUids.length));
+    this.#lockUids = this.#lockUids.filter(id => id !== uid);
+    this.#listeners.forEach(listener => listener.onPopup(this.#lockUids.length));
   }
 
   addDialogListener(listener: PopupListener) {
@@ -35,7 +36,16 @@ export class PopupManager implements UserInterface {
   }
   nextMessage(): void {
   }
+  previousMessage(): void {
+  }
   async performActions(_actions: (PopAction | undefined)[], state: PopState): Promise<PopState> {
     return {};
+  }
+  popups: ElemData[] = [];
+  getPopups(): ElemData[] {
+    return this.popups;
+  }
+  setPopupData(index: number, data: ElemData): void {
+    this.popups[index] = data;
   }
 }
