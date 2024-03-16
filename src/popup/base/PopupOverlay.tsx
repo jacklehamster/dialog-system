@@ -10,12 +10,16 @@ import ReactDOM from 'react-dom/client';
 import { UserInterface } from '../UserInterface';
 import { DEFAULT_REGISTRY } from './DefaultRegistry';
 import { useActions } from '../actions/useActions';
+import { useActionsStack } from '../actions/useActionsStack';
+import { PopAction } from '../actions/PopAction';
 
 interface Props {
   popupManager: PopupManager;
   popupControl: PopupControl;
   registry?: Record<string, (data: ElemData, ui: UserInterface, onDone: ()=> void) => JSX.Element>;  
 }
+
+
 
 export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_REGISTRY }: Props) {
   const { popups, addPopup, closePopup, topPopupUid } = usePopups();
@@ -51,9 +55,9 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
     popupManager.openMenu = async (data) => {
       const type = 'menu';
       addPopup({ uid: `${type}-${uuidv4()}`, type, ...data });
-      return new Promise((resolve) =>
-        setOnDones((onDones) => [...onDones, resolve]),
-      );
+      // return new Promise((resolve) =>
+      //   setOnDones((onDones) => [...onDones, resolve]),
+      // );
     };
   }, [popupManager, addPopup]);
 
@@ -61,18 +65,35 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
     popupManager.openDialog = async (data) => {
       const type = 'dialog';
       addPopup({ uid: `${type}-${uuidv4()}`, type, ...data });
-      return new Promise((resolve) =>
-        setOnDones((onDones) => [...onDones, resolve]),
-      );
+      // return new Promise((resolve) =>
+      //   setOnDones((onDones) => [...onDones, resolve]),
+      // );
     };
     popupManager.closePopup = gameContext.closePopup;
   }, [popupManager, addPopup]);
 
-  const { performActions } = useActions({ ui: popupManager });
+  const { addActions, executeAction } = useActionsStack({ ui: popupManager });
+
+  // const { performActions } = useActions({ ui: popupManager });
+  useEffect(() => {
+    popupManager.performActions = (action, state) => {
+      const actions = Array.isArray(action) ? action : [action];
+      // console.log("ACTIONS", actions);
+      addActions(actions.filter((a): a is PopAction => !!a), () => {
+        // console.log("DONE");
+      });
+    };
+  }, [popupManager, addActions]);
 
   useEffect(() => {
-    popupManager.performActions = performActions;
-  }, [popupManager, performActions]);
+    const listener = (e: KeyboardEvent) => {
+      if (e.code === "Enter") {
+        executeAction();
+      }
+    };
+    document.addEventListener("keydown", listener);
+    return () => document.removeEventListener("keydown", listener);
+  }, [document, executeAction]);
 
   useEffect(() => {
     popupManager.popups = popups;
