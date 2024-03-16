@@ -6,9 +6,9 @@ import { PopState } from "./actions/PopState";
 import { ElemData } from "./base/usePopups";
 
 export interface UserInterface {
-  performActions(actions: PopAction | (PopAction | undefined)[], state: PopState, callback: (state: PopState) => void): void;
-  openMenu(menu: MenuData): void;
-  openDialog(dialog: DialogData): void;
+  performActions(actions: PopAction | (PopAction | undefined)[], state: PopState): Promise<PopState>;
+  openMenu(menu: MenuData): Promise<void>;
+  openDialog(dialog: DialogData): Promise<void>;
   closePopup(): void;
   nextMessage(idx?: number): void;
   previousMessage(idx?: number): void;

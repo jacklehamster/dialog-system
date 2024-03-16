@@ -47,25 +47,18 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
     }
     const selectedAction = item.action;
     const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-    ui.performActions(actions, {
-      keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT,
-    }, state => {
+    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then(state => {
       if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
         closePopup(menuData.uid);
       }
+      if (!state.keepMenu) {
+        onDone();
+      }
+      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+        setHidden(false);
+      }
     });
-    //.then(state => {
-    //   if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
-    //     closePopup(menuData.uid);
-    //   }
-    //   if (!state.keepMenu) {
-    //     onDone();
-    //   }
-    //   if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
-    //     setHidden(false);
-    //   }
-    // });
-  }, [ui, setHidden, selectedItem]);
+  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden, closePopup]);
 
   const { lockState } = useControlsLock({
     uid: menuData.uid,
@@ -81,10 +74,6 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
       },
     }), [moveSelection, setMenuHoverEnabled, onMenuAction])
   });
-
-  useEffect(() => {
-    console.log(selectedItem);
-  }, [selectedItem]);
 
   return {
     selectedItem,

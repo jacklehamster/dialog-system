@@ -28,9 +28,9 @@ export class PopupManager implements UserInterface {
     this.#listeners.delete(listener);
   }
 
-  openDialog(_dialog: DialogData): void {
+  async openDialog(_dialog: DialogData): Promise<void> {
   }
-  openMenu(_menu: MenuData): void {
+  async openMenu(_menu: MenuData): Promise<void> {
   }
   closePopup(): void {
   }
@@ -38,7 +38,8 @@ export class PopupManager implements UserInterface {
   }
   previousMessage(): void {
   }
-  performActions(_actions: (PopAction | undefined)[], state: PopState): void {
+  async performActions(_actions: (PopAction | undefined)[], state: PopState): Promise<PopState> {
+    return {};
   }
   popups: ElemData[] = [];
   getPopups(): ElemData[] {

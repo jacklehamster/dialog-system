@@ -51,12 +51,11 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      ui.performActions(actions, {}, () => {
-        nextMessage();
+      ui.performActions(actions, {}).then(state => {
+        if (!state.stayOnMessage) {
+          nextMessage();
+        }
       });
-      //.then(state => {
-      //     nextMessage();
-      // });
     }
   }, [message, ui, dialogData, nextMessage]);
 

@@ -24,48 +24,54 @@ const openTestDialogAction: PopActionModel = { dialog: {
             {
               label: "I don't know",
               behavior: MenuItemBehavior.NONE,
-              action: { dialog: {
-                layout: {
-                  position: [100, 100],
-                  size: [300, 200],  
-                },
-                conversation: {
-                  messages: [
-                    { text: "You should know!" },
-                  ],
-                },
-              }},
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200],  
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "You should know!" },
+                    ],
+                  },
+                }},
+              ],
             },
             {
               label: "good",
               behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              action: { dialog: {
-                layout: {
-                  uid: "main-dialog",
-                  position: [50, 200],
-                  positionFromBottom: true,  
+              action: { 
+                dialog: {
+                  layout: {
+                    uid: "main-dialog",
+                    position: [50, 200],
+                    positionFromBottom: true,  
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "That's nice to know!" },
+                    ],
+                  },
                 },
-                conversation: {
-                  messages: [
-                    { text: "That's nice to know!" },
-                  ],
-                },
-              }},
+              },
             },
             {
               label: "bad",
               behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-              action: { dialog: {
-                layout: {
-                  position: [100, 100],
-                  size: [300, 200],  
-                },
-                conversation: {
-                  messages: [
-                    { text: "Get better!" },
-                  ],
-                },
-              }},
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200],  
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "Get better!" },
+                    ],
+                  },
+                }},
+              ],
             },
             {
               label: "----",

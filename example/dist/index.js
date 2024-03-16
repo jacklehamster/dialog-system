@@ -197,8 +197,10 @@ var useDialog = function({ dialogData, ui, onDone }) {
   import_react8.useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      ui.performActions(actions, {}, () => {
-        nextMessage();
+      ui.performActions(actions, {}).then((state) => {
+        if (!state.stayOnMessage) {
+          nextMessage();
+        }
       });
     }
   }, [message, ui, dialogData, nextMessage]);
@@ -303,14 +305,18 @@ var useMenu = function({ menuData, ui, onDone }) {
     }
     const selectedAction = item.action;
     const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-    ui.performActions(actions, {
-      keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT
-    }, (state) => {
+    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then((state) => {
       if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
         closePopup(menuData.uid);
       }
+      if (!state.keepMenu) {
+        onDone();
+      }
+      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+        setHidden(false);
+      }
     });
-  }, [ui, setHidden, selectedItem]);
+  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden, closePopup]);
   const { lockState } = useControlsLock({
     uid: menuData.uid,
     listener: import_react11.useMemo(() => ({
@@ -325,9 +331,6 @@ var useMenu = function({ menuData, ui, onDone }) {
       }
     }), [moveSelection, setMenuHoverEnabled, onMenuAction])
   });
-  import_react11.useEffect(() => {
-    console.log(selectedItem);
-  }, [selectedItem]);
   return {
     selectedItem,
     select,
@@ -422,44 +425,19 @@ var Menu = function({ menuData, ui, onDone }) {
     ]
   }, undefined, true, undefined, this);
 };
-var useActionsStack = function({ ui }) {
-  const [state, dispatch] = import_react12.useReducer(reducer, { sequences: [] });
-  const addActions = import_react12.useCallback((actions, callback) => {
-    dispatch({
-      newActions: actions,
-      callback
-    });
-  }, [dispatch]);
-  const nextAction = import_react12.useCallback(() => {
-    dispatch({ next: true });
-  }, [dispatch]);
-  const sequence = import_react12.useMemo(() => {
-    return state.sequences[state.sequences.length - 1];
-  }, [state]);
+var useActions = function({ ui }) {
   const registry = import_react12.useMemo(() => new ConversionRegistry, []);
-  const executeAction = import_react12.useCallback(async () => {
-    if (sequence) {
-      const { actions, index, popState } = sequence;
-      const action2 = actions[index];
-      if (action2) {
-        const popActionFun = typeof action2 === "function" ? action2 : registry.convert(action2);
-        await popActionFun(ui, popState);
-        nextAction();
+  const performActions = import_react12.useCallback(async (oneOrMoreActions, state) => {
+    const actions = Array.isArray(oneOrMoreActions) ? oneOrMoreActions : [oneOrMoreActions];
+    for (const action of actions) {
+      if (action) {
+        const popActionFun = typeof action === "function" ? action : registry.convert(action);
+        await popActionFun(ui, state);
       }
     }
-  }, [registry, sequence, ui, nextAction]);
-  const action = import_react12.useMemo(() => {
-    return sequence?.actions[sequence?.index];
-  }, [sequence]);
-  import_react12.useEffect(() => {
-    if (action) {
-      executeAction();
-    }
-  }, [executeAction, action]);
-  return {
-    addActions,
-    executeAction
-  };
+    return state;
+  }, [ui, registry]);
+  return { performActions };
 };
 var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REGISTRY }) {
   const { popups, addPopup, closePopup, topPopupUid } = usePopups();
@@ -489,32 +467,21 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
     popupManager.openMenu = async (data) => {
       const type = "menu";
       addPopup({ uid: `${type}-${v4_default()}`, type, ...data });
+      return new Promise((resolve) => setOnDones((onDones) => [...onDones, resolve]));
     };
   }, [popupManager, addPopup]);
   import_react13.useEffect(() => {
     popupManager.openDialog = async (data) => {
       const type = "dialog";
       addPopup({ uid: `${type}-${v4_default()}`, type, ...data });
+      return new Promise((resolve) => setOnDones((onDones) => [...onDones, resolve]));
     };
     popupManager.closePopup = gameContext.closePopup;
   }, [popupManager, addPopup]);
-  const { addActions, executeAction } = useActionsStack({ ui: popupManager });
+  const { performActions } = useActions({ ui: popupManager });
   import_react13.useEffect(() => {
-    popupManager.performActions = (action, state) => {
-      const actions = Array.isArray(action) ? action : [action];
-      addActions(actions.filter((a) => !!a), () => {
-      });
-    };
-  }, [popupManager, addActions]);
-  import_react13.useEffect(() => {
-    const listener = (e) => {
-      if (e.code === "Enter") {
-        executeAction();
-      }
-    };
-    document.addEventListener("keydown", listener);
-    return () => document.removeEventListener("keydown", listener);
-  }, [document, executeAction]);
+    popupManager.performActions = performActions;
+  }, [popupManager, performActions]);
   import_react13.useEffect(() => {
     popupManager.popups = popups;
   }, [popupManager, popups]);
@@ -24087,9 +24054,9 @@ class PopupManager {
   removeDialogListener(listener) {
     this.#listeners.delete(listener);
   }
-  openDialog(_dialog) {
+  async openDialog(_dialog) {
   }
-  openMenu(_menu) {
+  async openMenu(_menu) {
   }
   closePopup() {
   }
@@ -24097,7 +24064,8 @@ class PopupManager {
   }
   previousMessage() {
   }
-  performActions(_actions, state) {
+  async performActions(_actions, state) {
+    return {};
   }
   popups = [];
   getPopups() {
@@ -24290,44 +24258,6 @@ class ConversionRegistry {
     };
   }
 }
-var reducer = function(state, action) {
-  console.log(action);
-  if (action.newActions) {
-    const result = {
-      sequences: [...state.sequences, {
-        actions: action.newActions,
-        popState: {},
-        index: 0,
-        onCallback: action.callback
-      }]
-    };
-    return result;
-  }
-  if (action.next) {
-    const subsequences = state.sequences.slice(0, state.sequences.length - 1);
-    const sequence = state.sequences[state.sequences.length - 1];
-    if (sequence) {
-      const { actions, popState, index, onCallback } = state.sequences[state.sequences.length - 1];
-      const newIndex = index + 1;
-      console.log(newIndex, "out", sequence.actions.length);
-      if (newIndex >= sequence.actions.length - 1) {
-        return {
-          sequences: subsequences
-        };
-      } else {
-        return {
-          sequences: [...subsequences, {
-            actions,
-            popState,
-            index: newIndex,
-            onCallback
-          }]
-        };
-      }
-    }
-  }
-  return state;
-};
 var jsx_dev_runtime7 = __toESM(require_jsx_dev_runtime(), 1);
 var STYLE = {
   position: "absolute",
@@ -24360,48 +24290,54 @@ var openTestDialogAction = { dialog: {
             {
               label: "I don't know",
               behavior: MenuItemBehavior.NONE,
-              action: { dialog: {
-                layout: {
-                  position: [100, 100],
-                  size: [300, 200]
-                },
-                conversation: {
-                  messages: [
-                    { text: "You should know!" }
-                  ]
-                }
-              } }
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200]
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "You should know!" }
+                    ]
+                  }
+                } }
+              ]
             },
             {
               label: "good",
               behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              action: { dialog: {
-                layout: {
-                  uid: "main-dialog",
-                  position: [50, 200],
-                  positionFromBottom: true
-                },
-                conversation: {
-                  messages: [
-                    { text: "That's nice to know!" }
-                  ]
+              action: {
+                dialog: {
+                  layout: {
+                    uid: "main-dialog",
+                    position: [50, 200],
+                    positionFromBottom: true
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "That's nice to know!" }
+                    ]
+                  }
                 }
-              } }
+              }
             },
             {
               label: "bad",
               behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-              action: { dialog: {
-                layout: {
-                  position: [100, 100],
-                  size: [300, 200]
-                },
-                conversation: {
-                  messages: [
-                    { text: "Get better!" }
-                  ]
-                }
-              } }
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200]
+                  },
+                  conversation: {
+                    messages: [
+                      { text: "Get better!" }
+                    ]
+                  }
+                } }
+              ]
             },
             {
               label: "----"
