@@ -1,3 +1,4 @@
+import { useGameContext } from "../context/Provider";
 import { Layout } from "./Layout";
 
 const DEFAULT_HORIZONTAL_PADDING = 100;
@@ -8,14 +9,16 @@ interface Props {
 }
 
 export function usePopupLayout({ layout }: Props) {
-  const x = layout.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
-  const y = layout.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
-  const left = layout.positionFromRight ? `calc(100% - ${x}px)` : x;
-  const top = layout.positionFromBottom ? `calc(100% - ${y}px)` : y;
+  const { getLayout } = useGameContext();
+  const layoutModel = getLayout(layout);
+  const x = layoutModel.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
+  const y = layoutModel.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
+  const left = layoutModel.positionFromRight ? `calc(100% - ${x}px)` : x;
+  const top = layoutModel.positionFromBottom ? `calc(100% - ${y}px)` : y;
   const right = DEFAULT_HORIZONTAL_PADDING;
   const bottom = DEFAULT_VERTICAL_PADDING;
-  const width = layout.size?.[0];
-  const height = layout.size?.[1];
+  const width = layoutModel.size?.[0];
+  const height = layoutModel.size?.[1];
 
   return {
     left, top, right, bottom, width, height,

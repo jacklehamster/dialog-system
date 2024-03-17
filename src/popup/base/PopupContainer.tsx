@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ElemData } from './usePopups';
 import { UserInterface } from '../UserInterface';
 import { PopupData } from './PopupData';
+import { Layout, LayoutModel } from './Layout';
+import { useGameContext } from '../context/Provider';
 
 interface Props {
   popups: ElemData[];
@@ -35,8 +37,10 @@ export function PopupContainer({ popups, ui, onDone, registry }: Props) {
     });
   }, [popups, setElemsMap, createElement]);
 
+  const { getLayout } = useGameContext();
   const getRect = useCallback(
-    ({ positionFromRight, positionFromBottom, position, size }: PopupData["layout"] = {}) => {
+    (layout: Layout = {}) => {
+      const { positionFromRight, positionFromBottom, position, size } = getLayout(layout);
       const x = positionFromRight
         ? position?.[0] ?? 0
         : Number.MAX_SAFE_INTEGER - (position?.[0] ?? 0);
@@ -47,7 +51,7 @@ export function PopupContainer({ popups, ui, onDone, registry }: Props) {
       const height = size?.[1] ?? Number.MAX_SAFE_INTEGER;
       return { x, y, width, height };
     },
-    [],
+    [getLayout],
   );
 
   const elements = useMemo<JSX.Element[]>(() => {

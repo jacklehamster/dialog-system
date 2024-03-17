@@ -34,13 +34,15 @@ var PopupContainer = function({ popups, ui, onDone, registry }) {
       return newElemsMap;
     });
   }, [popups, setElemsMap, createElement]);
-  const getRect = import_react4.useCallback(({ positionFromRight, positionFromBottom, position, size } = {}) => {
+  const { getLayout } = useGameContext();
+  const getRect = import_react4.useCallback((layout = {}) => {
+    const { positionFromRight, positionFromBottom, position, size } = getLayout(layout);
     const x = positionFromRight ? position?.[0] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[0] ?? 0);
     const y = positionFromBottom ? position?.[1] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[1] ?? 0);
     const width = size?.[0] ?? Number.MAX_SAFE_INTEGER;
     const height = size?.[1] ?? Number.MAX_SAFE_INTEGER;
     return { x, y, width, height };
-  }, []);
+  }, [getLayout]);
   const elements = import_react4.useMemo(() => {
     const sortedPopups = [...popups];
     sortedPopups.sort((p1, p2) => {
@@ -66,14 +68,16 @@ var unsafeStringify = function(arr, offset = 0) {
   return byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]];
 };
 var usePopupLayout = function({ layout }) {
-  const x = layout.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
-  const y = layout.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
-  const left = layout.positionFromRight ? `calc(100% - ${x}px)` : x;
-  const top = layout.positionFromBottom ? `calc(100% - ${y}px)` : y;
+  const { getLayout } = useGameContext();
+  const layoutModel = getLayout(layout);
+  const x = layoutModel.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
+  const y = layoutModel.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
+  const left = layoutModel.positionFromRight ? `calc(100% - ${x}px)` : x;
+  const top = layoutModel.positionFromBottom ? `calc(100% - ${y}px)` : y;
   const right = DEFAULT_HORIZONTAL_PADDING;
   const bottom = DEFAULT_VERTICAL_PADDING;
-  const width = layout.size?.[0];
-  const height = layout.size?.[1];
+  const width = layoutModel.size?.[0];
+  const height = layoutModel.size?.[1];
   return {
     left,
     top,
@@ -214,10 +218,10 @@ var useUniquePopupOnLayout = function({ layout, disabled }) {
   const { layoutReplacementCallbacks } = useGameContext();
   const hide = import_react9.useCallback(() => setVisible(false), [setVisible]);
   import_react9.useEffect(() => {
-    const layoutUid = layout.uid;
-    if (layoutUid && !disabled) {
-      layoutReplacementCallbacks[layoutUid]?.();
-      layoutReplacementCallbacks[layoutUid] = hide;
+    const layoutName = typeof layout === "string" ? layout : layout.name;
+    if (layoutName && !disabled) {
+      layoutReplacementCallbacks[layoutName]?.();
+      layoutReplacementCallbacks[layoutName] = hide;
       setVisible(true);
     }
   }, [disabled, hide, layout, layoutReplacementCallbacks]);
@@ -443,7 +447,25 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
   const { popups, addPopup, closePopup, topPopupUid } = usePopups();
   const [, setOnDones] = import_react13.useState([]);
   const layoutReplacementCallbacks = import_react13.useMemo(() => ({}), []);
+  const layoutModels = import_react13.useMemo(() => ({}), []);
   const [forcedTopPopupUid, setForcedTopPopupUid] = import_react13.useState();
+  const registerLayout = import_react13.useCallback((layout) => {
+    const layouts = Array.isArray(layout) ? layout : [layout];
+    layouts.forEach((layout2) => {
+      if (layout2.name) {
+        layoutModels[layout2.name] = layout2;
+      }
+    });
+  }, [layoutModels]);
+  const getLayout = import_react13.useCallback((layout) => {
+    if (typeof layout === "string") {
+      return layoutModels[layout];
+    }
+    if (layout.name) {
+      layoutModels[layout.name] = layout;
+    }
+    return layout;
+  }, [layoutModels]);
   const gameContext = import_react13.useMemo(() => ({
     addControlsLock: (uid) => popupManager.addControlsLock(uid),
     removeControlsLock: (uid) => popupManager.removeControlsLock(uid),
@@ -452,7 +474,9 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
     topPopupUid,
     layoutReplacementCallbacks,
     forcedTopPopupUid,
-    setForcedTopPopupUid
+    setForcedTopPopupUid,
+    getLayout,
+    registerLayout
   }), [
     popupManager,
     popupControl,
@@ -461,7 +485,9 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
     topPopupUid,
     layoutReplacementCallbacks,
     forcedTopPopupUid,
-    setForcedTopPopupUid
+    setForcedTopPopupUid,
+    getLayout,
+    registerLayout
   ]);
   import_react13.useEffect(() => {
     popupManager.openMenu = async (data) => {
@@ -478,6 +504,9 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
     };
     popupManager.closePopup = gameContext.closePopup;
   }, [popupManager, addPopup]);
+  import_react13.useEffect(() => {
+    popupManager.registerLayout = registerLayout;
+  }, [registerLayout]);
   const { performActions } = useActions({ ui: popupManager });
   import_react13.useEffect(() => {
     popupManager.performActions = performActions;
@@ -24018,7 +24047,10 @@ var DEFAULT_GAME_CONTEXT = {
   },
   topPopupUid: "",
   popupControl: new PopupControl,
-  layoutReplacementCallbacks: {}
+  layoutReplacementCallbacks: {},
+  getLayout(_layout) {
+    return {};
+  }
 };
 var Context = import_react.default.createContext(DEFAULT_GAME_CONTEXT);
 var Context_default = Context;
@@ -24073,6 +24105,8 @@ class PopupManager {
   }
   setPopupData(index, data) {
     this.popups[index] = data;
+  }
+  registerLayout(_layout) {
   }
 }
 var import_react3 = __toESM(require_react(), 1);
@@ -24243,18 +24277,32 @@ class OpenMenuConvertor {
   }
 }
 
+class LayoutRegistryConvertor {
+  convert(model) {
+    return (ui) => ui.registerLayout(model.layout);
+  }
+}
+
 class ConversionRegistry {
   #openDialogConvertor = new OpenDialogConvertor;
   #openMenuConvertor = new OpenMenuConvertor;
+  #layoutConvertor = new LayoutRegistryConvertor;
   convert(model) {
-    const { dialog, menu } = model;
+    const { dialog, menu, layout } = model;
+    const callbacks = [];
+    if (layout) {
+      callbacks.push(this.#layoutConvertor.convert({ layout }));
+    }
     if (dialog) {
-      return this.#openDialogConvertor.convert({ dialog });
+      callbacks.push(this.#openDialogConvertor.convert({ dialog }));
     }
     if (menu) {
-      return this.#openMenuConvertor.convert({ menu });
+      callbacks.push(this.#openMenuConvertor.convert({ menu }));
     }
-    return () => {
+    return callbacks.length <= 1 ? callbacks[0] : async (ui, state) => {
+      for (const callback of callbacks) {
+        await callback(ui, state);
+      }
     };
   }
 }
@@ -24267,92 +24315,92 @@ var STYLE = {
 };
 
 // src/index.tsx
-var openTestDialogAction = { dialog: {
-  layout: {
-    uid: "main-dialog",
+var openTestDialogAction = {
+  layout: [{
+    name: "main-dialog",
     position: [50, 200],
     positionFromBottom: true
-  },
-  conversation: {
-    messages: [
-      { text: "Hello there." },
-      {
-        text: "How are you?",
-        action: { menu: {
-          layout: {
-            position: [400, 360],
-            size: [undefined, 150],
-            positionFromBottom: true,
-            positionFromRight: true
-          },
-          maxRows: 3,
-          items: [
-            {
-              label: "I don't know",
-              behavior: MenuItemBehavior.NONE,
-              action: [
-                { dialog: {
-                  layout: {
-                    position: [100, 100],
-                    size: [300, 200]
-                  },
-                  conversation: {
-                    messages: [
-                      { text: "You should know!" }
-                    ]
-                  }
-                } }
-              ]
-            },
-            {
-              label: "good",
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              action: {
-                dialog: {
-                  layout: {
-                    uid: "main-dialog",
-                    position: [50, 200],
-                    positionFromBottom: true
-                  },
-                  conversation: {
-                    messages: [
-                      { text: "That's nice to know!" }
-                    ]
+  }, {
+    name: "test-menu",
+    position: [400, 360],
+    size: [undefined, 150],
+    positionFromBottom: true,
+    positionFromRight: true
+  }],
+  dialog: {
+    layout: "main-dialog",
+    conversation: {
+      messages: [
+        { text: "Hello there." },
+        {
+          text: "How are you?",
+          action: { menu: {
+            layout: "test-menu",
+            maxRows: 3,
+            items: [
+              {
+                label: "I don't know",
+                behavior: MenuItemBehavior.NONE,
+                action: [
+                  { dialog: {
+                    layout: {
+                      position: [100, 100],
+                      size: [300, 200]
+                    },
+                    conversation: {
+                      messages: [
+                        { text: "You should know!" }
+                      ]
+                    }
+                  } }
+                ]
+              },
+              {
+                label: "good",
+                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+                action: {
+                  dialog: {
+                    layout: "main-dialog",
+                    conversation: {
+                      messages: [
+                        { text: "That's nice to know!" }
+                      ]
+                    }
                   }
                 }
+              },
+              {
+                label: "bad",
+                behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
+                action: [
+                  { dialog: {
+                    layout: {
+                      position: [100, 100],
+                      size: [300, 200]
+                    },
+                    conversation: {
+                      messages: [
+                        { text: "Get better!" }
+                      ]
+                    }
+                  } }
+                ]
+              },
+              {
+                label: "----"
+              },
+              {
+                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+                label: "bye"
               }
-            },
-            {
-              label: "bad",
-              behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-              action: [
-                { dialog: {
-                  layout: {
-                    position: [100, 100],
-                    size: [300, 200]
-                  },
-                  conversation: {
-                    messages: [
-                      { text: "Get better!" }
-                    ]
-                  }
-                } }
-              ]
-            },
-            {
-              label: "----"
-            },
-            {
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              label: "bye"
-            }
-          ]
-        } }
-      },
-      { text: "Good bye!" }
-    ]
+            ]
+          } }
+        },
+        { text: "Good bye!" }
+      ]
+    }
   }
-} };
+};
 export {
   openTestDialogAction,
   attachPopup,

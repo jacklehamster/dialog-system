@@ -1,3 +1,4 @@
+import { Layout, LayoutModel } from '../base/Layout';
 import { PopupControl } from '../controls/PopupControl';
 
 export interface GameContextType {
@@ -7,6 +8,7 @@ export interface GameContextType {
   popupControl: PopupControl;
   topPopupUid: string;
   layoutReplacementCallbacks: Record<string, () => void>;
+  getLayout(layout: Layout): LayoutModel;
 }
 
 export const DEFAULT_GAME_CONTEXT: GameContextType = {
@@ -22,4 +24,7 @@ export const DEFAULT_GAME_CONTEXT: GameContextType = {
   topPopupUid: '',
   popupControl: new PopupControl(),
   layoutReplacementCallbacks: {},
+  getLayout(_layout) {
+    return {};      
+  },
 };

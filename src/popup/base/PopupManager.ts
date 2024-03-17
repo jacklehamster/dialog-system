@@ -5,6 +5,7 @@ import { MenuData } from '../menu/MenuData';
 import { PopAction } from '../actions/PopAction';
 import { PopState } from '../actions/PopState';
 import { ElemData } from './usePopups';
+import { LayoutModel } from './Layout';
 
 export class PopupManager implements UserInterface {
   #lockUids: string[] = [];
@@ -47,5 +48,7 @@ export class PopupManager implements UserInterface {
   }
   setPopupData(index: number, data: ElemData): void {
     this.popups[index] = data;
+  }
+  registerLayout(_layout: LayoutModel | LayoutModel[]): void {
   }
 }

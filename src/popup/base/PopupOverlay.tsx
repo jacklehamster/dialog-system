@@ -10,6 +10,7 @@ import ReactDOM from 'react-dom/client';
 import { UserInterface } from '../UserInterface';
 import { DEFAULT_REGISTRY } from './DefaultRegistry';
 import { useActions } from '../actions/useActions';
+import { Layout, LayoutModel } from './Layout';
 
 interface Props {
   popupManager: PopupManager;
@@ -22,7 +23,27 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
   const [, setOnDones] = useState<(() => void)[]>([]);
   const layoutReplacementCallbacks = useMemo<Record<string, () => void>>(() => ({
   }), []);
+  const layoutModels = useMemo<Record<string, LayoutModel>>(() => ({
+  }), []);
   const [forcedTopPopupUid, setForcedTopPopupUid] = useState<string>();
+  
+  const registerLayout = useCallback((layout: LayoutModel | LayoutModel[]) => {
+    const layouts = Array.isArray(layout) ? layout : [layout];
+    layouts.forEach(layout => {
+      if (layout.name) {
+        layoutModels[layout.name] = layout;
+      }  
+    });
+  }, [layoutModels]);
+  const getLayout = useCallback((layout: Layout) => {
+    if (typeof layout === "string") {
+      return layoutModels[layout];
+    }
+    if (layout.name) {
+      layoutModels[layout.name] = layout;
+    }
+    return layout;
+  }, [layoutModels]);
 
   const gameContext: GameContextType = useMemo<GameContextType>(
     () => ({
@@ -34,6 +55,8 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
       layoutReplacementCallbacks,
       forcedTopPopupUid,
       setForcedTopPopupUid,
+      getLayout,
+      registerLayout,
     }),
     [
       popupManager,
@@ -44,6 +67,8 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
       layoutReplacementCallbacks,
       forcedTopPopupUid,
       setForcedTopPopupUid,
+      getLayout,
+      registerLayout,
     ],
   );
 
@@ -67,6 +92,11 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
     };
     popupManager.closePopup = gameContext.closePopup;
   }, [popupManager, addPopup]);
+
+  useEffect(() => {
+    popupManager.registerLayout = registerLayout;
+  }, [registerLayout]);
+
 
   const { performActions } = useActions({ ui: popupManager });
 

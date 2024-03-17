@@ -12,10 +12,10 @@ export function useUniquePopupOnLayout({ layout, disabled }: Props) {
   const { layoutReplacementCallbacks } = useGameContext();
   const hide = useCallback(() => setVisible(false), [setVisible]);
   useEffect(() => {
-    const layoutUid = layout.uid;
-    if (layoutUid && !disabled) {
-      layoutReplacementCallbacks[layoutUid]?.();
-      layoutReplacementCallbacks[layoutUid] = hide;
+    const layoutName = typeof layout === "string" ? layout : layout.name;
+    if (layoutName && !disabled) {
+      layoutReplacementCallbacks[layoutName]?.();
+      layoutReplacementCallbacks[layoutName] = hide;
       setVisible(true);
     }
   }, [disabled, hide, layout, layoutReplacementCallbacks]);
