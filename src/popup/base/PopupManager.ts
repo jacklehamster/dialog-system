@@ -2,7 +2,7 @@ import { UserInterface } from '../UserInterface';
 import { PopupListener } from './PopupListener';
 import { DialogData } from '../dialog/DialogData';
 import { MenuData } from '../menu/MenuData';
-import { PopAction } from '../actions/PopAction';
+import { PopAction, PopActionResult } from '../actions/PopAction';
 import { PopState } from '../actions/PopState';
 import { ElemData } from './usePopups';
 import { LayoutModel } from './Layout';
@@ -29,9 +29,9 @@ export class PopupManager implements UserInterface {
     this.#listeners.delete(listener);
   }
 
-  async openDialog(_dialog: DialogData): Promise<void> {
+  async openDialog(_dialog: DialogData): Promise<PopActionResult> {
   }
-  async openMenu(_menu: MenuData): Promise<void> {
+  async openMenu(_menu: MenuData): Promise<PopActionResult> {
   }
   closePopup(): void {
   }
@@ -39,8 +39,7 @@ export class PopupManager implements UserInterface {
   }
   previousMessage(): void {
   }
-  async performActions(_actions: (PopAction | undefined)[], state: PopState): Promise<PopState> {
-    return {};
+  performActions(_actions: (PopAction | undefined)[], _state: PopState, _onDone: (state: PopState) => void): PopActionResult {
   }
   popups: ElemData[] = [];
   getPopups(): ElemData[] {

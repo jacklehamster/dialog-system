@@ -7,7 +7,7 @@ export interface OpenDialogModel {
 }
 
 export class OpenDialogConvertor implements PopActionConvertor<OpenDialogModel> {
-  convert(model: OpenDialogModel): PopActionFunction {
-    return (ui) => ui.openDialog(model.dialog);
+  convert(model: OpenDialogModel): PopActionFunction[] {
+    return [(ui) => ui.openDialog(model.dialog)];
   }
 }

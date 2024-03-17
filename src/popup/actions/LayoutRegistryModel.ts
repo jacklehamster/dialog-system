@@ -7,7 +7,7 @@ export interface LayoutRegistryModel {
 }
 
 export class LayoutRegistryConvertor implements PopActionConvertor<LayoutRegistryModel> {
-  convert(model: LayoutRegistryModel): PopActionFunction {
-    return (ui) => ui.registerLayout(model.layout);
+  convert(model: LayoutRegistryModel): PopActionFunction[] {
+    return [(ui) => ui.registerLayout(model.layout)];
   }
 }

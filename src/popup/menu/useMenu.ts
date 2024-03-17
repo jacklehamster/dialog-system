@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { UserInterface } from "../UserInterface";
 import { MenuData } from "./MenuData";
 import { useSelection } from "./useSelection";
@@ -47,7 +47,7 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
     }
     const selectedAction = item.action;
     const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then(state => {
+    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }, state => {
       if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
         closePopup(menuData.uid);
       }
@@ -58,7 +58,7 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
         setHidden(false);
       }
     });
-  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden, closePopup]);
+  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden, closePopup, onDone]);
 
   const { lockState } = useControlsLock({
     uid: menuData.uid,

@@ -10,22 +10,18 @@ export class ConversionRegistry implements PopActionConvertor<PopActionModel> {
   #openMenuConvertor = new OpenMenuConvertor();
   #layoutConvertor = new LayoutRegistryConvertor();
 
-  convert(model: PopActionModel): PopActionFunction {
+  convert(model: PopActionModel): PopActionFunction[] {
     const { dialog, menu, layout } = model;
     const callbacks: PopActionFunction[] = [];
     if (layout) {
-      callbacks.push(this.#layoutConvertor.convert({ layout }));
+      callbacks.push(...this.#layoutConvertor.convert({ layout }));
     }
     if (dialog) {
-      callbacks.push(this.#openDialogConvertor.convert({ dialog }));
+      callbacks.push(...this.#openDialogConvertor.convert({ dialog }));
     }
     if (menu) {
-      callbacks.push(this.#openMenuConvertor.convert({ menu }));
+      callbacks.push(...this.#openMenuConvertor.convert({ menu }));
     }
-    return callbacks.length <= 1 ? callbacks[0] : async (ui, state) => {
-      for (const callback of callbacks) {
-        await callback(ui, state);
-      }
-    };
+    return callbacks;
   }
 }

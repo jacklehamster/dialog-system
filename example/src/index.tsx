@@ -12,80 +12,73 @@ const openTestDialogAction: PopActionModel = {
     size: [undefined, 150],
     positionFromBottom: true,
     positionFromRight: true,  
-  }],
+  }, {
+    name: "layout-popup",
+    position: [100, 100],
+    size: [300, 200],  
+}],
   dialog: {
     layout: "main-dialog",
-    conversation: {
-      messages: [
-        { text: "Hello there." },
-        {
-          text: "How are you?",
-          action: { menu: {
-            layout: "test-menu",
-            maxRows: 3,
-            items: [
-              {
-                label: "I don't know",
-                behavior: MenuItemBehavior.NONE,
-                action: [
-                  { dialog: {
-                    layout: {
-                      position: [100, 100],
-                      size: [300, 200],  
-                    },
-                    conversation: {
-                      messages: [
-                        { text: "You should know!" },
-                      ],
-                    },
-                  }},
-                ],
-              },
-              {
-                label: "good",
-                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-                action: { 
-                  dialog: {
-                    layout: "main-dialog",
-                    conversation: {
-                      messages: [
-                        { text: "That's nice to know!" },
-                      ],
-                    },
-                  },
+    messages: [
+      "Hello there.",
+      {
+        text: "How are you?",
+        action: { menu: {
+          layout: "test-menu",
+          maxRows: 3,
+          items: [
+            {
+              label: "I don't know",
+              behavior: MenuItemBehavior.NONE,
+              action: [
+                { dialog: {
+                  layout: "layout-popup",
+                  messages: [
+                    "You should know!",
+                  ],
+                }},
+              ],
+            },
+            {
+              label: "good",
+              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+              action: { 
+                dialog: {
+                  layout: "main-dialog",
+                  messages: [
+                    "That's nice to know!",
+                  ],
                 },
               },
-              {
-                label: "bad",
-                behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-                action: [
-                  { dialog: {
-                    layout: {
-                      position: [100, 100],
-                      size: [300, 200],  
-                    },
-                    conversation: {
-                      messages: [
-                        { text: "Get better!" },
-                      ],
-                    },
-                  }},
-                ],
-              },
-              {
-                label: "----",
-              },
-              {
-                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-                label: "bye",
-              },
-            ],
-          }},
-        },
-        { text: "Good bye!" },
-      ]
-    },
-  }, 
+            },
+            {
+              label: "bad",
+              behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200],  
+                  },
+                  messages: [
+                    "Get better!",
+                  ],
+                }},
+              ],
+            },
+            {
+              label: "----",
+            },
+            {
+              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+              label: "bye",
+            },
+          ],
+        }},
+      },
+      "Good bye!",
+    ]
+  },
 }; 
 
 export { attachPopup, MenuItemBehavior, openTestDialogAction };

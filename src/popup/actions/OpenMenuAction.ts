@@ -7,7 +7,7 @@ export interface OpenMenuModel {
 }
 
 export class OpenMenuConvertor implements PopActionConvertor<OpenMenuModel> {
-  convert(model: OpenMenuModel): PopActionFunction {
-    return (ui) => ui.openMenu(model.menu);
+  convert(model: OpenMenuModel): PopActionFunction[] {
+    return [(ui) => ui.openMenu(model.menu)];
   }
 }
