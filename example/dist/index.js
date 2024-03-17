@@ -36,7 +36,6 @@ var PopupContainer = function({ popups, ui, onDone, registry }) {
   }, [popups, setElemsMap, createElement]);
   const { getLayout } = useGameContext();
   const getRect = import_react4.useCallback((layout = {}) => {
-    console.log("layout", layout);
     const { positionFromRight, positionFromBottom, position, size } = getLayout(layout);
     const x = positionFromRight ? position?.[0] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[0] ?? 0);
     const y = positionFromBottom ? position?.[1] ?? 0 : Number.MAX_SAFE_INTEGER - (position?.[1] ?? 0);
@@ -190,11 +189,8 @@ var useDialog = function({ dialogData, ui, onDone }) {
   }, [setIndex]);
   useReplaceUiMethod({ ui, methodName: "nextMessage", method: nextMessage });
   useReplaceUiMethod({ ui, methodName: "previousMessage", method: previousMessage });
-  const messages = import_react8.useMemo(() => dialogData?.messages, [dialogData]);
-  const message = import_react8.useMemo(() => {
-    const msg = messages?.at(index);
-    return typeof msg === "string" ? { text: msg } : msg;
-  }, [messages, index]);
+  const messages = import_react8.useMemo(() => dialogData.conversation?.messages, [dialogData]);
+  const message = import_react8.useMemo(() => messages?.at(index), [messages, index]);
   const { closePopup } = useGameContext();
   import_react8.useEffect(() => {
     if (!message) {
@@ -205,7 +201,7 @@ var useDialog = function({ dialogData, ui, onDone }) {
   import_react8.useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      ui.performActions(actions, {}, (state) => {
+      ui.performActions(actions, {}).then((state) => {
         if (!state.stayOnMessage) {
           nextMessage();
         }
@@ -313,7 +309,7 @@ var useMenu = function({ menuData, ui, onDone }) {
     }
     const selectedAction = item.action;
     const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }, (state) => {
+    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then((state) => {
       if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
         closePopup(menuData.uid);
       }
@@ -324,7 +320,7 @@ var useMenu = function({ menuData, ui, onDone }) {
         setHidden(false);
       }
     });
-  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden, closePopup, onDone]);
+  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden, closePopup]);
   const { lockState } = useControlsLock({
     uid: menuData.uid,
     listener: import_react11.useMemo(() => ({
@@ -435,45 +431,16 @@ var Menu = function({ menuData, ui, onDone }) {
 };
 var useActions = function({ ui }) {
   const registry = import_react12.useMemo(() => new ConversionRegistry, []);
-  const [state, dispatch] = import_react12.useReducer(reducer, {
-    actions: [],
-    index: 0,
-    popState: {},
-    stack: []
-  });
-  const performActions = import_react12.useCallback((oneOrMoreActions, popState, onDone) => {
-    const actions = (Array.isArray(oneOrMoreActions) ? oneOrMoreActions : [oneOrMoreActions]).filter((a) => !!a);
-    const actionModels = [];
-    actions.forEach((popAction) => {
-      if (typeof popAction === "function") {
-        actionModels.push(popAction);
-      } else {
-        actionModels.push(...registry.convert(popAction));
+  const performActions = import_react12.useCallback(async (oneOrMoreActions, state) => {
+    const actions = Array.isArray(oneOrMoreActions) ? oneOrMoreActions : [oneOrMoreActions];
+    for (const action of actions) {
+      if (action) {
+        const popActionFun = typeof action === "function" ? action : registry.convert(action);
+        await popActionFun(ui, state);
       }
-    });
-    dispatch({ actions: actionModels, index: 0, popState, pushStack: true });
-  }, [dispatch, registry]);
-  const executeAction = import_react12.useCallback(async () => {
-    if (state.index < state.actions.length) {
-      const action = state.actions[state.index];
-      const result = await action(ui, state.popState);
-      return result !== PopActionResultEnum.WAIT_RESPONSE;
     }
-    return false;
-  }, [state, ui]);
-  import_react12.useEffect(() => {
-    executeAction().then((next) => {
-      if (next) {
-        dispatch({ next });
-      }
-    });
-  }, [dispatch, executeAction]);
-  import_react12.useEffect(() => {
-    if (state.index >= state.actions.length) {
-      dispatch({ popStack: true });
-      console.log("DONE ACTIONS", state);
-    }
-  }, [state.index, state.actions]);
+    return state;
+  }, [ui, registry]);
   return { performActions };
 };
 var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REGISTRY }) {
@@ -526,14 +493,14 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
     popupManager.openMenu = async (data) => {
       const type = "menu";
       addPopup({ uid: `${type}-${v4_default()}`, type, ...data });
-      return PopActionResultEnum.WAIT_RESPONSE;
+      return new Promise((resolve) => setOnDones((onDones) => [...onDones, resolve]));
     };
   }, [popupManager, addPopup]);
   import_react13.useEffect(() => {
     popupManager.openDialog = async (data) => {
       const type = "dialog";
       addPopup({ uid: `${type}-${v4_default()}`, type, ...data });
-      return PopActionResultEnum.WAIT_RESPONSE;
+      return new Promise((resolve) => setOnDones((onDones) => [...onDones, resolve]));
     };
     popupManager.closePopup = gameContext.closePopup;
   }, [popupManager, addPopup]);
@@ -24129,7 +24096,8 @@ class PopupManager {
   }
   previousMessage() {
   }
-  performActions(_actions, _state, _onDone) {
+  async performActions(_actions, state) {
+    return {};
   }
   popups = [];
   getPopups() {
@@ -24296,27 +24264,22 @@ var DEFAULT_REGISTRY = {
   }, data.uid, false, undefined, null)
 };
 var import_react12 = __toESM(require_react(), 1);
-var PopActionResultEnum;
-(function(PopActionResultEnum2) {
-  PopActionResultEnum2[PopActionResultEnum2["NEXT"] = 0] = "NEXT";
-  PopActionResultEnum2[PopActionResultEnum2["WAIT_RESPONSE"] = 1] = "WAIT_RESPONSE";
-})(PopActionResultEnum || (PopActionResultEnum = {}));
 
 class OpenDialogConvertor {
   convert(model) {
-    return [(ui) => ui.openDialog(model.dialog)];
+    return (ui) => ui.openDialog(model.dialog);
   }
 }
 
 class OpenMenuConvertor {
   convert(model) {
-    return [(ui) => ui.openMenu(model.menu)];
+    return (ui) => ui.openMenu(model.menu);
   }
 }
 
 class LayoutRegistryConvertor {
   convert(model) {
-    return [(ui) => ui.registerLayout(model.layout)];
+    return (ui) => ui.registerLayout(model.layout);
   }
 }
 
@@ -24328,45 +24291,21 @@ class ConversionRegistry {
     const { dialog, menu, layout } = model;
     const callbacks = [];
     if (layout) {
-      callbacks.push(...this.#layoutConvertor.convert({ layout }));
+      callbacks.push(this.#layoutConvertor.convert({ layout }));
     }
     if (dialog) {
-      callbacks.push(...this.#openDialogConvertor.convert({ dialog }));
+      callbacks.push(this.#openDialogConvertor.convert({ dialog }));
     }
     if (menu) {
-      callbacks.push(...this.#openMenuConvertor.convert({ menu }));
+      callbacks.push(this.#openMenuConvertor.convert({ menu }));
     }
-    return callbacks;
+    return callbacks.length <= 1 ? callbacks[0] : async (ui, state) => {
+      for (const callback of callbacks) {
+        await callback(ui, state);
+      }
+    };
   }
 }
-var reducer = function(state, action) {
-  const stack = [...state.stack];
-  if (action.pushStack) {
-    stack.push({
-      actions: state.actions,
-      index: state.index,
-      popState: state.popState,
-      stack: []
-    });
-  } else if (action.popStack) {
-    const popped = stack.pop();
-    if (popped) {
-      const { index: index2, actions: actions2, popState: popState2 } = popped;
-      state.actions = actions2;
-      state.index = index2;
-      state.popState = popState2;
-    }
-  }
-  const index = action.index ?? (action.next ? state.index + 1 : state.index);
-  const actions = action.actions ?? state.actions;
-  const popState = action.popState ?? state.popState;
-  return {
-    actions,
-    index,
-    popState,
-    stack
-  };
-};
 var jsx_dev_runtime7 = __toESM(require_jsx_dev_runtime(), 1);
 var STYLE = {
   position: "absolute",
@@ -24387,72 +24326,79 @@ var openTestDialogAction = {
     size: [undefined, 150],
     positionFromBottom: true,
     positionFromRight: true
-  }, {
-    name: "layout-popup",
-    position: [100, 100],
-    size: [300, 200]
   }],
   dialog: {
     layout: "main-dialog",
-    messages: [
-      "Hello there.",
-      {
-        text: "How are you?",
-        action: { menu: {
-          layout: "test-menu",
-          maxRows: 3,
-          items: [
-            {
-              label: "I don't know",
-              behavior: MenuItemBehavior.NONE,
-              action: [
-                { dialog: {
-                  layout: "layout-popup",
-                  messages: [
-                    "You should know!"
-                  ]
-                } }
-              ]
-            },
-            {
-              label: "good",
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              action: {
-                dialog: {
-                  layout: "main-dialog",
-                  messages: [
-                    "That's nice to know!"
-                  ]
+    conversation: {
+      messages: [
+        { text: "Hello there." },
+        {
+          text: "How are you?",
+          action: { menu: {
+            layout: "test-menu",
+            maxRows: 3,
+            items: [
+              {
+                label: "I don't know",
+                behavior: MenuItemBehavior.NONE,
+                action: [
+                  { dialog: {
+                    layout: {
+                      position: [100, 100],
+                      size: [300, 200]
+                    },
+                    conversation: {
+                      messages: [
+                        { text: "You should know!" }
+                      ]
+                    }
+                  } }
+                ]
+              },
+              {
+                label: "good",
+                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+                action: {
+                  dialog: {
+                    layout: "main-dialog",
+                    conversation: {
+                      messages: [
+                        { text: "That's nice to know!" }
+                      ]
+                    }
+                  }
                 }
+              },
+              {
+                label: "bad",
+                behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
+                action: [
+                  { dialog: {
+                    layout: {
+                      position: [100, 100],
+                      size: [300, 200]
+                    },
+                    conversation: {
+                      messages: [
+                        { text: "Get better!" }
+                      ]
+                    }
+                  } }
+                ]
+              },
+              {
+                label: "----"
+              },
+              {
+                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+                label: "bye"
               }
-            },
-            {
-              label: "bad",
-              behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-              action: [
-                { dialog: {
-                  layout: {
-                    position: [100, 100],
-                    size: [300, 200]
-                  },
-                  messages: [
-                    "Get better!"
-                  ]
-                } }
-              ]
-            },
-            {
-              label: "----"
-            },
-            {
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              label: "bye"
-            }
-          ]
-        } }
-      },
-      "Good bye!"
-    ]
+            ]
+          } }
+        },
+        { text: "Good bye!" }
+      ]
+    }
   }
 };
 export {

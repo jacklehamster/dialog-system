@@ -37,11 +37,8 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   useReplaceUiMethod({ ui, methodName: "nextMessage", method: nextMessage });
   useReplaceUiMethod({ ui, methodName: "previousMessage", method: previousMessage });
 
-  const messages = useMemo(() => dialogData?.messages, [dialogData]);
-  const message = useMemo(() => {
-    const msg = messages?.at(index);
-    return typeof msg === "string" ? { text: msg } : msg;
-  }, [messages, index]);
+  const messages = useMemo(() => dialogData.conversation?.messages, [dialogData]);
+  const message = useMemo(() => messages?.at(index), [messages, index]);
   const { closePopup } = useGameContext();
 
   useEffect(() => {
@@ -54,7 +51,7 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   useEffect(() => {
     if (message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      ui.performActions(actions, {}, (state): void => {
+      ui.performActions(actions, {}).then(state => {
         if (!state.stayOnMessage) {
           nextMessage();
         }

@@ -40,7 +40,6 @@ export function PopupContainer({ popups, ui, onDone, registry }: Props) {
   const { getLayout } = useGameContext();
   const getRect = useCallback(
     (layout: Layout = {}) => {
-      console.log("layout", layout);
       const { positionFromRight, positionFromBottom, position, size } = getLayout(layout);
       const x = positionFromRight
         ? position?.[0] ?? 0

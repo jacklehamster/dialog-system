@@ -11,7 +11,6 @@ import { UserInterface } from '../UserInterface';
 import { DEFAULT_REGISTRY } from './DefaultRegistry';
 import { useActions } from '../actions/useActions';
 import { Layout, LayoutModel } from './Layout';
-import { PopActionResultEnum } from '../actions/PopAction';
 
 interface Props {
   popupManager: PopupManager;
@@ -77,10 +76,9 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
     popupManager.openMenu = async (data) => {
       const type = 'menu';
       addPopup({ uid: `${type}-${uuidv4()}`, type, ...data });
-      // return new Promise((resolve) =>
-      //   setOnDones((onDones) => [...onDones, resolve]),
-      // );
-      return PopActionResultEnum.WAIT_RESPONSE;
+      return new Promise((resolve) =>
+        setOnDones((onDones) => [...onDones, resolve]),
+      );
     };
   }, [popupManager, addPopup]);
 
@@ -88,10 +86,9 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
     popupManager.openDialog = async (data) => {
       const type = 'dialog';
       addPopup({ uid: `${type}-${uuidv4()}`, type, ...data });
-      // return new Promise((resolve) =>
-      //   setOnDones((onDones) => [...onDones, resolve]),
-      // );
-      return PopActionResultEnum.WAIT_RESPONSE;
+      return new Promise((resolve) =>
+        setOnDones((onDones) => [...onDones, resolve]),
+      );
     };
     popupManager.closePopup = gameContext.closePopup;
   }, [popupManager, addPopup]);
