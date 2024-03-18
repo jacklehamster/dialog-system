@@ -34,7 +34,8 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
   const { closePopup } = useGameContext();
 
   const onMenuAction = useCallback((index?: number) => {
-    const item = index !== undefined ? menuData.items.at(index) : selectedItem;
+    const itemFlex = index !== undefined ? menuData.items.at(index) : selectedItem;
+    const item = typeof (itemFlex) === "string" ? { label: itemFlex } : itemFlex;
     if (!item) {
       return;
     }

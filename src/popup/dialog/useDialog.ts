@@ -49,7 +49,7 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   }, [dialogData, onDone, message, closePopup]);
 
   useEffect(() => {
-    if (message?.action) {
+    if (typeof (message) === 'object' && message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
       ui.performActions(actions, {}).then(state => {
         if (!state.stayOnMessage) {
@@ -60,7 +60,7 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   }, [message, ui, dialogData, nextMessage]);
 
   return {
-    text: message?.text,
+    text: typeof (message) === "string" ? message : message?.text,
     disabled,
   };
 }

@@ -58,7 +58,7 @@ export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
                   }}
                   onMouseOver={menuHoverEnabled ? () => select(index) : undefined}
                   onClick={menuHoverEnabled ? () => onMenuAction(index) : undefined}>
-                  {item?.label}
+                  {typeof(item) === "string" ? item : item?.label}
                 </div>
               );
             })}

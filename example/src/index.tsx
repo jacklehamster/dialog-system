@@ -12,11 +12,15 @@ const openTestDialogAction: PopActionModel = {
     size: [undefined, 150],
     positionFromBottom: true,
     positionFromRight: true,  
-  }],
+  }, {
+    name: "side-popup",
+    position: [100, 100],
+    size: [300, 200],  
+}],
   dialog: {
     layout: "main-dialog",
     messages: [
-      { text: "Hello there." },
+      "Hello there.",
       {
         text: "How are you?",
         action: { menu: {
@@ -28,12 +32,9 @@ const openTestDialogAction: PopActionModel = {
               behavior: MenuItemBehavior.NONE,
               action: [
                 { dialog: {
-                  layout: {
-                    position: [100, 100],
-                    size: [300, 200],  
-                  },
+                  layout: "side-popup",
                   messages: [
-                    { text: "You should know!" },
+                    "You should know!",
                   ],
                 }},
               ],
@@ -45,7 +46,7 @@ const openTestDialogAction: PopActionModel = {
                 dialog: {
                   layout: "main-dialog",
                   messages: [
-                    { text: "That's nice to know!" },
+                    "That's nice to know!",
                   ],
                 },
               },
@@ -55,19 +56,14 @@ const openTestDialogAction: PopActionModel = {
               behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
               action: [
                 { dialog: {
-                  layout: {
-                    position: [100, 100],
-                    size: [300, 200],  
-                  },
+                  layout: "side-popup",
                   messages: [
-                    { text: "Get better!" },
+                    "Get better!",
                   ],
                 }},
               ],
             },
-            {
-              label: "----",
-            },
+            "----",
             {
               behavior: MenuItemBehavior.CLOSE_ON_SELECT,
               label: "bye",
@@ -75,7 +71,7 @@ const openTestDialogAction: PopActionModel = {
           ],
         }},
       },
-      { text: "Good bye!" },
+      "Good bye!",
     ],
   }, 
 }; 

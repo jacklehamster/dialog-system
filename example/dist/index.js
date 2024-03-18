@@ -199,7 +199,7 @@ var useDialog = function({ dialogData, ui, onDone }) {
     }
   }, [dialogData, onDone, message, closePopup]);
   import_react8.useEffect(() => {
-    if (message?.action) {
+    if (typeof message === "object" && message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
       ui.performActions(actions, {}).then((state) => {
         if (!state.stayOnMessage) {
@@ -209,7 +209,7 @@ var useDialog = function({ dialogData, ui, onDone }) {
     }
   }, [message, ui, dialogData, nextMessage]);
   return {
-    text: message?.text,
+    text: typeof message === "string" ? message : message?.text,
     disabled
   };
 };
@@ -296,7 +296,8 @@ var useMenu = function({ menuData, ui, onDone }) {
   const [hidden, setHidden] = import_react11.useState(false);
   const { closePopup } = useGameContext();
   const onMenuAction = import_react11.useCallback((index) => {
-    const item = index !== undefined ? menuData.items.at(index) : selectedItem;
+    const itemFlex = index !== undefined ? menuData.items.at(index) : selectedItem;
+    const item = typeof itemFlex === "string" ? { label: itemFlex } : itemFlex;
     if (!item) {
       return;
     }
@@ -402,7 +403,7 @@ var Menu = function({ menuData, ui, onDone }) {
                 },
                 onMouseOver: menuHoverEnabled ? () => select(index) : undefined,
                 onClick: menuHoverEnabled ? () => onMenuAction(index) : undefined,
-                children: item?.label
+                children: typeof item === "string" ? item : item?.label
               }, index, false, undefined, this);
             })
           }, undefined, false, undefined, this)
@@ -24326,11 +24327,15 @@ var openTestDialogAction = {
     size: [undefined, 150],
     positionFromBottom: true,
     positionFromRight: true
+  }, {
+    name: "side-popup",
+    position: [100, 100],
+    size: [300, 200]
   }],
   dialog: {
     layout: "main-dialog",
     messages: [
-      { text: "Hello there." },
+      "Hello there.",
       {
         text: "How are you?",
         action: { menu: {
@@ -24342,12 +24347,9 @@ var openTestDialogAction = {
               behavior: MenuItemBehavior.NONE,
               action: [
                 { dialog: {
-                  layout: {
-                    position: [100, 100],
-                    size: [300, 200]
-                  },
+                  layout: "side-popup",
                   messages: [
-                    { text: "You should know!" }
+                    "You should know!"
                   ]
                 } }
               ]
@@ -24359,7 +24361,7 @@ var openTestDialogAction = {
                 dialog: {
                   layout: "main-dialog",
                   messages: [
-                    { text: "That's nice to know!" }
+                    "That's nice to know!"
                   ]
                 }
               }
@@ -24369,19 +24371,14 @@ var openTestDialogAction = {
               behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
               action: [
                 { dialog: {
-                  layout: {
-                    position: [100, 100],
-                    size: [300, 200]
-                  },
+                  layout: "side-popup",
                   messages: [
-                    { text: "Get better!" }
+                    "Get better!"
                   ]
                 } }
               ]
             },
-            {
-              label: "----"
-            },
+            "----",
             {
               behavior: MenuItemBehavior.CLOSE_ON_SELECT,
               label: "bye"
@@ -24389,7 +24386,7 @@ var openTestDialogAction = {
           ]
         } }
       },
-      { text: "Good bye!" }
+      "Good bye!"
     ]
   }
 };
