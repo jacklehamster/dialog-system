@@ -37,7 +37,7 @@ export function useDialog({ dialogData, ui, onDone }: Props): Result {
   useReplaceUiMethod({ ui, methodName: "nextMessage", method: nextMessage });
   useReplaceUiMethod({ ui, methodName: "previousMessage", method: previousMessage });
 
-  const messages = useMemo(() => dialogData.conversation?.messages, [dialogData]);
+  const messages = useMemo(() => dialogData.messages, [dialogData]);
   const message = useMemo(() => messages?.at(index), [messages, index]);
   const { closePopup } = useGameContext();
 

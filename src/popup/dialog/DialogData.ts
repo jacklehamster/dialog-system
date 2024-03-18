@@ -1,8 +1,9 @@
+import { List } from "abstract-list";
 import { PopupData } from "../base/PopupData";
-import { Conversation } from "./Conversation";
+import { Message } from "./Message";
 
 export interface DialogData extends PopupData {
   type?: "dialog",
-  conversation: Conversation;
+  messages: List<Message> | Message[];
   onClose?: () => void;
 }

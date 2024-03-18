@@ -189,7 +189,7 @@ var useDialog = function({ dialogData, ui, onDone }) {
   }, [setIndex]);
   useReplaceUiMethod({ ui, methodName: "nextMessage", method: nextMessage });
   useReplaceUiMethod({ ui, methodName: "previousMessage", method: previousMessage });
-  const messages = import_react8.useMemo(() => dialogData.conversation?.messages, [dialogData]);
+  const messages = import_react8.useMemo(() => dialogData.messages, [dialogData]);
   const message = import_react8.useMemo(() => messages?.at(index), [messages, index]);
   const { closePopup } = useGameContext();
   import_react8.useEffect(() => {
@@ -24329,76 +24329,68 @@ var openTestDialogAction = {
   }],
   dialog: {
     layout: "main-dialog",
-    conversation: {
-      messages: [
-        { text: "Hello there." },
-        {
-          text: "How are you?",
-          action: { menu: {
-            layout: "test-menu",
-            maxRows: 3,
-            items: [
-              {
-                label: "I don't know",
-                behavior: MenuItemBehavior.NONE,
-                action: [
-                  { dialog: {
-                    layout: {
-                      position: [100, 100],
-                      size: [300, 200]
-                    },
-                    conversation: {
-                      messages: [
-                        { text: "You should know!" }
-                      ]
-                    }
-                  } }
-                ]
-              },
-              {
-                label: "good",
-                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-                action: {
-                  dialog: {
-                    layout: "main-dialog",
-                    conversation: {
-                      messages: [
-                        { text: "That's nice to know!" }
-                      ]
-                    }
-                  }
+    messages: [
+      { text: "Hello there." },
+      {
+        text: "How are you?",
+        action: { menu: {
+          layout: "test-menu",
+          maxRows: 3,
+          items: [
+            {
+              label: "I don't know",
+              behavior: MenuItemBehavior.NONE,
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200]
+                  },
+                  messages: [
+                    { text: "You should know!" }
+                  ]
+                } }
+              ]
+            },
+            {
+              label: "good",
+              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+              action: {
+                dialog: {
+                  layout: "main-dialog",
+                  messages: [
+                    { text: "That's nice to know!" }
+                  ]
                 }
-              },
-              {
-                label: "bad",
-                behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-                action: [
-                  { dialog: {
-                    layout: {
-                      position: [100, 100],
-                      size: [300, 200]
-                    },
-                    conversation: {
-                      messages: [
-                        { text: "Get better!" }
-                      ]
-                    }
-                  } }
-                ]
-              },
-              {
-                label: "----"
-              },
-              {
-                behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-                label: "bye"
               }
-            ]
-          } }
-        },
-        { text: "Good bye!" }
-      ]
-    }
+            },
+            {
+              label: "bad",
+              behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
+              action: [
+                { dialog: {
+                  layout: {
+                    position: [100, 100],
+                    size: [300, 200]
+                  },
+                  messages: [
+                    { text: "Get better!" }
+                  ]
+                } }
+              ]
+            },
+            {
+              label: "----"
+            },
+            {
+              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
+              label: "bye"
+            }
+          ]
+        } }
+      },
+      { text: "Good bye!" }
+    ]
   }
 };
 export {
