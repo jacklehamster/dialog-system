@@ -22,7 +22,7 @@
     <div id="root"></div>
   </body>
   <script type="module">
-    import { attachPopup, MenuItemBehavior, openTestDialogAction } from './dist/index.js';
+    import { attachPopup, startMenuAction } from './dist/index.js';
     const { ui, popupControl, detach } = attachPopup(document.getElementById("root"));
     window.popupControl = popupControl;
     window.ui = ui;
@@ -30,15 +30,10 @@
 
     window.startDialog = () => {
       document.getElementById('start-over').disabled = true;
-      const startMenuAction = { menu: {
-        items: [
-          { label: "Test", action: openTestDialogAction, behavior: MenuItemBehavior.HIDE_ON_SELECT },
-          { label: "Exit", behavior: MenuItemBehavior.CLOSE_ON_SELECT },
-        ],
-      } };
       setTimeout(async () => {
-        await ui.performActions(startMenuAction);
-        document.getElementById('start-over').disabled = false;
+        await ui.performActions(startMenuAction, {}, () => {
+          document.getElementById('start-over').disabled = false;
+        });
       }, 100);
     };
     window.startDialog();

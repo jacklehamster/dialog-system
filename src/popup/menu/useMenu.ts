@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { UserInterface } from "../UserInterface";
 import { MenuData } from "./MenuData";
 import { useSelection } from "./useSelection";
 import { MenuItem } from "./MenuItem";
-import { MenuItemBehavior, MenuItemBehaviorDefault } from '../menu/MenuItemBehavior';
+import { MenuBehaviorEnum, getBehavior } from './MenuBehavior';
 import { LockStatus, useControlsLock } from "../controls/useControlsLock";
 import { PopupControlListener } from "../controls/PopupControlListener";
 import { useGameContext } from "../context/Provider";
@@ -39,23 +39,23 @@ export function useMenu({ menuData, ui, onDone }: Props): Result {
     if (!item) {
       return;
     }
-    const behavior = item.behavior ?? MenuItemBehaviorDefault;
-    if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
+    const behavior = getBehavior(item.behavior ?? menuData.behavior);
+    if (behavior === MenuBehaviorEnum.CLOSE_ON_SELECT) {
       closePopup(menuData.uid);
     }
-    if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+    if (behavior === MenuBehaviorEnum.HIDE_ON_SELECT) {
       setHidden(true);
     }
     const selectedAction = item.action;
     const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then(state => {
-      if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
+    ui.performActions(actions, { keepMenu: behavior === MenuBehaviorEnum.NONE || behavior === MenuBehaviorEnum.HIDE_ON_SELECT }, (state) => {
+      if (behavior === MenuBehaviorEnum.CLOSE_AFTER_SELECT) {
         closePopup(menuData.uid);
       }
       if (!state.keepMenu) {
         onDone();
       }
-      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+      if (behavior === MenuBehaviorEnum.HIDE_ON_SELECT) {
         setHidden(false);
       }
     });

@@ -70,14 +70,14 @@ var unsafeStringify = function(arr, offset = 0) {
 var usePopupLayout = function({ layout }) {
   const { getLayout } = useGameContext();
   const layoutModel = getLayout(layout);
-  const x = layoutModel.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
-  const y = layoutModel.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
+  const x = layoutModel.position?.[0] || DEFAULT_HORIZONTAL_PADDING;
+  const y = layoutModel.position?.[1] || DEFAULT_VERTICAL_PADDING;
   const left = layoutModel.positionFromRight ? `calc(100% - ${x}px)` : x;
   const top = layoutModel.positionFromBottom ? `calc(100% - ${y}px)` : y;
   const right = DEFAULT_HORIZONTAL_PADDING;
   const bottom = DEFAULT_VERTICAL_PADDING;
-  const width = layoutModel.size?.[0];
-  const height = layoutModel.size?.[1];
+  const width = layoutModel.size?.[0] || undefined;
+  const height = layoutModel.size?.[1] || undefined;
   return {
     left,
     top,
@@ -201,10 +201,11 @@ var useDialog = function({ dialogData, ui, onDone }) {
   import_react8.useEffect(() => {
     if (typeof message === "object" && message?.action) {
       const actions = Array.isArray(message.action) ? message.action : [message.action];
-      ui.performActions(actions, {}).then((state) => {
+      ui.performActions(actions, {}, (state) => {
         if (!state.stayOnMessage) {
           nextMessage();
         }
+        return state;
       });
     }
   }, [message, ui, dialogData, nextMessage]);
@@ -290,6 +291,13 @@ var useSelection = function({ menuData }) {
     scrollDown
   };
 };
+var getBehavior = function(behavior) {
+  if (typeof behavior === "string") {
+    return MenuBehaviorEnum[behavior] ?? MenuItemBehaviorDefault;
+  } else {
+    return behavior ?? MenuItemBehaviorDefault;
+  }
+};
 var useMenu = function({ menuData, ui, onDone }) {
   const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
   const [menuHoverEnabled, setMenuHoverEnabled] = import_react11.useState(false);
@@ -301,23 +309,23 @@ var useMenu = function({ menuData, ui, onDone }) {
     if (!item) {
       return;
     }
-    const behavior = item.behavior ?? MenuItemBehaviorDefault;
-    if (behavior === MenuItemBehavior.CLOSE_ON_SELECT) {
+    const behavior = getBehavior(item.behavior ?? menuData.behavior);
+    if (behavior === MenuBehaviorEnum.CLOSE_ON_SELECT) {
       closePopup(menuData.uid);
     }
-    if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+    if (behavior === MenuBehaviorEnum.HIDE_ON_SELECT) {
       setHidden(true);
     }
     const selectedAction = item.action;
     const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-    ui.performActions(actions, { keepMenu: behavior === MenuItemBehavior.NONE || behavior === MenuItemBehavior.HIDE_ON_SELECT }).then((state) => {
-      if (behavior === MenuItemBehavior.CLOSE_AFTER_SELECT) {
+    ui.performActions(actions, { keepMenu: behavior === MenuBehaviorEnum.NONE || behavior === MenuBehaviorEnum.HIDE_ON_SELECT }, (state) => {
+      if (behavior === MenuBehaviorEnum.CLOSE_AFTER_SELECT) {
         closePopup(menuData.uid);
       }
       if (!state.keepMenu) {
         onDone();
       }
-      if (behavior === MenuItemBehavior.HIDE_ON_SELECT) {
+      if (behavior === MenuBehaviorEnum.HIDE_ON_SELECT) {
         setHidden(false);
       }
     });
@@ -432,7 +440,7 @@ var Menu = function({ menuData, ui, onDone }) {
 };
 var useActions = function({ ui }) {
   const registry = import_react12.useMemo(() => new ConversionRegistry, []);
-  const performActions = import_react12.useCallback(async (oneOrMoreActions, state) => {
+  const performActions = import_react12.useCallback(async (oneOrMoreActions, state, onDone) => {
     const actions = Array.isArray(oneOrMoreActions) ? oneOrMoreActions : [oneOrMoreActions];
     for (const action of actions) {
       if (action) {
@@ -440,7 +448,7 @@ var useActions = function({ ui }) {
         await popActionFun(ui, state);
       }
     }
-    return state;
+    onDone(state);
   }, [ui, registry]);
   return { performActions };
 };
@@ -24097,8 +24105,7 @@ class PopupManager {
   }
   previousMessage() {
   }
-  async performActions(_actions, state) {
-    return {};
+  async performActions(_actions, _state, _onDone) {
   }
   popups = [];
   getPopups() {
@@ -24242,14 +24249,14 @@ var z = function(u, j, p = []) {
 };
 var import_react11 = __toESM(require_react(), 1);
 var import_react10 = __toESM(require_react(), 1);
-var MenuItemBehavior;
-(function(MenuItemBehavior2) {
-  MenuItemBehavior2[MenuItemBehavior2["NONE"] = 0] = "NONE";
-  MenuItemBehavior2[MenuItemBehavior2["CLOSE_ON_SELECT"] = 1] = "CLOSE_ON_SELECT";
-  MenuItemBehavior2[MenuItemBehavior2["CLOSE_AFTER_SELECT"] = 2] = "CLOSE_AFTER_SELECT";
-  MenuItemBehavior2[MenuItemBehavior2["HIDE_ON_SELECT"] = 3] = "HIDE_ON_SELECT";
-})(MenuItemBehavior || (MenuItemBehavior = {}));
-var MenuItemBehaviorDefault = MenuItemBehavior.NONE;
+var MenuBehaviorEnum;
+(function(MenuBehaviorEnum2) {
+  MenuBehaviorEnum2[MenuBehaviorEnum2["NONE"] = 0] = "NONE";
+  MenuBehaviorEnum2[MenuBehaviorEnum2["CLOSE_ON_SELECT"] = 1] = "CLOSE_ON_SELECT";
+  MenuBehaviorEnum2[MenuBehaviorEnum2["CLOSE_AFTER_SELECT"] = 2] = "CLOSE_AFTER_SELECT";
+  MenuBehaviorEnum2[MenuBehaviorEnum2["HIDE_ON_SELECT"] = 3] = "HIDE_ON_SELECT";
+})(MenuBehaviorEnum || (MenuBehaviorEnum = {}));
+var MenuItemBehaviorDefault = MenuBehaviorEnum.NONE;
 var jsx_dev_runtime5 = __toESM(require_jsx_dev_runtime(), 1);
 var jsx_dev_runtime6 = __toESM(require_jsx_dev_runtime(), 1);
 var DEFAULT_REGISTRY = {
@@ -24316,82 +24323,86 @@ var STYLE = {
 };
 
 // src/index.tsx
-var openTestDialogAction = {
-  layout: [{
-    name: "main-dialog",
-    position: [50, 200],
-    positionFromBottom: true
-  }, {
-    name: "test-menu",
-    position: [400, 360],
-    size: [undefined, 150],
-    positionFromBottom: true,
-    positionFromRight: true
-  }, {
-    name: "side-popup",
-    position: [100, 100],
-    size: [300, 200]
-  }],
-  dialog: {
-    layout: "main-dialog",
-    messages: [
-      "Hello there.",
-      {
-        text: "How are you?",
-        action: { menu: {
-          layout: "test-menu",
-          maxRows: 3,
-          items: [
-            {
-              label: "I don't know",
-              behavior: MenuItemBehavior.NONE,
-              action: [
-                { dialog: {
-                  layout: "side-popup",
-                  messages: [
-                    "You should know!"
+var startMenuAction = { menu: {
+  items: [
+    { label: "Test", action: {
+      layout: [{
+        name: "main-dialog",
+        position: [50, 200],
+        positionFromBottom: true
+      }, {
+        name: "test-menu",
+        position: [400, 360],
+        size: [0, 150],
+        positionFromBottom: true,
+        positionFromRight: true
+      }, {
+        name: "side-popup",
+        position: [100, 100],
+        size: [300, 200]
+      }],
+      dialog: {
+        layout: "main-dialog",
+        messages: [
+          "Hello there.",
+          {
+            text: "How are you?",
+            action: { menu: {
+              layout: "test-menu",
+              maxRows: 3,
+              items: [
+                {
+                  label: "I don't know",
+                  behavior: "NONE",
+                  action: [
+                    { dialog: {
+                      layout: "side-popup",
+                      messages: [
+                        "You should know!"
+                      ]
+                    } }
                   ]
-                } }
-              ]
-            },
-            {
-              label: "good",
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              action: {
-                dialog: {
-                  layout: "main-dialog",
-                  messages: [
-                    "That's nice to know!"
+                },
+                {
+                  label: "good",
+                  behavior: "CLOSE_ON_SELECT",
+                  action: {
+                    dialog: {
+                      layout: "main-dialog",
+                      messages: [
+                        "That's nice to know!"
+                      ]
+                    }
+                  }
+                },
+                {
+                  label: "bad",
+                  behavior: "CLOSE_AFTER_SELECT",
+                  action: [
+                    { dialog: {
+                      layout: "side-popup",
+                      messages: [
+                        "Get better!"
+                      ]
+                    } }
                   ]
+                },
+                "----",
+                {
+                  behavior: "CLOSE_ON_SELECT",
+                  label: "bye"
                 }
-              }
-            },
-            {
-              label: "bad",
-              behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-              action: [
-                { dialog: {
-                  layout: "side-popup",
-                  messages: [
-                    "Get better!"
-                  ]
-                } }
               ]
-            },
-            "----",
-            {
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              label: "bye"
-            }
-          ]
-        } }
-      },
-      "Good bye!"
-    ]
-  }
-};
+            } }
+          },
+          "Good bye!"
+        ]
+      }
+    }, behavior: "HIDE_ON_SELECT" },
+    { label: "Exit", behavior: "CLOSE_ON_SELECT" }
+  ]
+} };
 export {
-  openTestDialogAction,
-  attachPopup,
-  MenuItemBehavior
+  startMenuAction,
+  attachPopup
 };

@@ -7,7 +7,7 @@ import { ElemData } from "./base/usePopups";
 import { LayoutModel } from "./base/Layout";
 
 export interface UserInterface {
-  performActions(actions: PopAction | (PopAction | undefined)[], state: PopState): Promise<PopState>;
+  performActions(actions: PopAction | (PopAction | undefined)[], state: PopState, onDone: (state: PopState) => void): void;
   openMenu(menu: MenuData): Promise<void>;
   openDialog(dialog: DialogData): Promise<void>;
   closePopup(): void;

@@ -39,8 +39,7 @@ export class PopupManager implements UserInterface {
   }
   previousMessage(): void {
   }
-  async performActions(_actions: (PopAction | undefined)[], state: PopState): Promise<PopState> {
-    return {};
+  async performActions(_actions: (PopAction | undefined)[], _state: PopState, _onDone: (state: PopState) => void): Promise<void> {
   }
   popups: ElemData[] = [];
   getPopups(): ElemData[] {

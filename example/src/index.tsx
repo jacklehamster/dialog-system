@@ -1,79 +1,83 @@
-import { PopActionModel } from "dialog-system";
-import { attachPopup, MenuItemBehavior } from "dialog-system";
+import { attachPopup, PopAction } from "dialog-system";
 
-const openTestDialogAction: PopActionModel = {
-  layout: [{
-    name: "main-dialog",
-    position: [50, 200],
-    positionFromBottom: true,  
-  }, {
-    name: "test-menu",
-    position: [400, 360],
-    size: [undefined, 150],
-    positionFromBottom: true,
-    positionFromRight: true,  
-  }, {
-    name: "side-popup",
-    position: [100, 100],
-    size: [300, 200],  
-}],
-  dialog: {
-    layout: "main-dialog",
-    messages: [
-      "Hello there.",
-      {
-        text: "How are you?",
-        action: { menu: {
-          layout: "test-menu",
-          maxRows: 3,
-          items: [
-            {
-              label: "I don't know",
-              behavior: MenuItemBehavior.NONE,
-              action: [
-                { dialog: {
-                  layout: "side-popup",
-                  messages: [
-                    "You should know!",
-                  ],
-                }},
-              ],
-            },
-            {
-              label: "good",
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              action: { 
-                dialog: {
-                  layout: "main-dialog",
-                  messages: [
-                    "That's nice to know!",
+const startMenuAction: PopAction = { menu: {
+  items: [
+    { label: "Test", action: {
+      layout: [{
+        name: "main-dialog",
+        position: [50, 200],
+        positionFromBottom: true,  
+      }, {
+        name: "test-menu",
+        position: [400, 360],
+        size: [0, 150],
+        positionFromBottom: true,
+        positionFromRight: true,  
+      }, {
+        name: "side-popup",
+        position: [100, 100],
+        size: [300, 200],  
+    }],
+      dialog: {
+        layout: "main-dialog",
+        messages: [
+          "Hello there.",
+          {
+            text: "How are you?",
+            action: { menu: {
+              layout: "test-menu",
+              maxRows: 3,
+              items: [
+                {
+                  label: "I don't know",
+                  behavior: "NONE",
+                  action: [
+                    { dialog: {
+                      layout: "side-popup",
+                      messages: [
+                        "You should know!",
+                      ],
+                    }},
                   ],
                 },
-              },
-            },
-            {
-              label: "bad",
-              behavior: MenuItemBehavior.CLOSE_AFTER_SELECT,
-              action: [
-                { dialog: {
-                  layout: "side-popup",
-                  messages: [
-                    "Get better!",
+                {
+                  label: "good",
+                  behavior: "CLOSE_ON_SELECT",
+                  action: { 
+                    dialog: {
+                      layout: "main-dialog",
+                      messages: [
+                        "That's nice to know!",
+                      ],
+                    },
+                  },
+                },
+                {
+                  label: "bad",
+                  behavior: "CLOSE_AFTER_SELECT",
+                  action: [
+                    { dialog: {
+                      layout: "side-popup",
+                      messages: [
+                        "Get better!",
+                      ],
+                    }},
                   ],
-                }},
+                },
+                "----",
+                {
+                  behavior: "CLOSE_ON_SELECT",
+                  label: "bye",
+                },
               ],
-            },
-            "----",
-            {
-              behavior: MenuItemBehavior.CLOSE_ON_SELECT,
-              label: "bye",
-            },
-          ],
-        }},
-      },
-      "Good bye!",
-    ],
-  }, 
-}; 
+            }},
+          },
+          "Good bye!",
+        ],
+      }, 
+    }, behavior: "HIDE_ON_SELECT" },
+    { label: "Exit", behavior: "CLOSE_ON_SELECT" },
+  ],
+} };
 
-export { attachPopup, MenuItemBehavior, openTestDialogAction };
+export { attachPopup, startMenuAction };
