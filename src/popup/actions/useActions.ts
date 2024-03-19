@@ -11,7 +11,7 @@ interface Props {
 export function useActions({ ui }: Props) {
   const registry = useMemo(() => new ConversionRegistry(), []);
 
-  const performActions = useCallback(async (oneOrMoreActions: PopAction | (PopAction | undefined)[], state: PopState, onDone: (state: PopState) => void) => {
+  const performActions = useCallback(async (oneOrMoreActions: PopAction | (PopAction | undefined)[], state: PopState = {}, onDone: (state: PopState) => void = () => { }) => {
     const actions = Array.isArray(oneOrMoreActions) ? oneOrMoreActions : [oneOrMoreActions];
     for (const action of actions) {
       if (action) {

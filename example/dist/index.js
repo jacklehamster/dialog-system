@@ -440,7 +440,8 @@ var Menu = function({ menuData, ui, onDone }) {
 };
 var useActions = function({ ui }) {
   const registry = import_react12.useMemo(() => new ConversionRegistry, []);
-  const performActions = import_react12.useCallback(async (oneOrMoreActions, state, onDone) => {
+  const performActions = import_react12.useCallback(async (oneOrMoreActions, state = {}, onDone = () => {
+  }) => {
     const actions = Array.isArray(oneOrMoreActions) ? oneOrMoreActions : [oneOrMoreActions];
     for (const action of actions) {
       if (action) {
