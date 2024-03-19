@@ -4,20 +4,20 @@ const startMenuAction: PopAction = { menu: {
   items: [
     { label: "Test", action: {
       layout: [{
-        name: "main-dialog",
-        position: [50, 200],
-        positionFromBottom: true,  
-      }, {
-        name: "test-menu",
-        position: [400, 360],
-        size: [0, 150],
-        positionFromBottom: true,
-        positionFromRight: true,  
-      }, {
-        name: "side-popup",
-        position: [100, 100],
-        size: [300, 200],  
-    }],
+          name: "main-dialog",
+          position: [50, 200],
+          positionFromBottom: true,  
+        }, {
+          name: "test-menu",
+          position: [400, 360],
+          size: [0, 150],
+          positionFromBottom: true,
+          positionFromRight: true,  
+        }, {
+          name: "side-popup",
+          position: [100, 100],
+          size: [300, 200],  
+      }],
       dialog: {
         layout: "main-dialog",
         messages: [
