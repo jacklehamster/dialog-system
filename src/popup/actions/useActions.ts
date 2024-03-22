@@ -16,7 +16,10 @@ export function useActions({ ui }: Props) {
     for (const action of actions) {
       if (action) {
         const popActionFun = typeof (action) === "function" ? action : registry.convert(action);
-        await popActionFun(ui, state);
+        const option = await popActionFun(ui, state);
+        if (option?.interrupt) {
+          break;
+        }
       }
     }
     onDone(state);

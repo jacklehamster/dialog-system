@@ -1,9 +1,9 @@
-import { MenuData } from "../menu/MenuData";
-import { PopActionFunction } from "./PopAction";
-import { PopActionConvertor } from "./PopActionConvertor";
+import { PopActionConvertor } from "../actions/PopActionConvertor";
+import { MenuModel } from "../model/MenuModel";
+import { PopActionFunction } from "../model/PopAction";
 
 export interface OpenMenuModel {
-  menu: MenuData;
+  menu: MenuModel;
 }
 
 export class OpenMenuConvertor implements PopActionConvertor<OpenMenuModel> {

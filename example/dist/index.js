@@ -93,8 +93,7 @@ var Popup2 = function({
   fontSize,
   disabled,
   hidden,
-  displayNone,
-  onDone
+  displayNone
 }) {
   const [h, setH] = import_react5.useState(0);
   import_react5.useEffect(() => {
@@ -239,7 +238,6 @@ var Dialog = function({ dialogData, ui, onDone }) {
     fontSize: dialogData.style?.fontSize,
     disabled,
     displayNone: !visible,
-    onDone,
     children: jsx_dev_runtime4.jsxDEV("div", {
       style: {
         padding: 10,
@@ -369,7 +367,6 @@ var Menu = function({ menuData, ui, onDone }) {
     disabled,
     hidden,
     displayNone: !visible,
-    onDone,
     children: [
       jsx_dev_runtime5.jsxDEV("svg", {
         xmlns: "http://www.w3.org/2000/svg",
@@ -446,7 +443,10 @@ var useActions = function({ ui }) {
     for (const action of actions) {
       if (action) {
         const popActionFun = typeof action === "function" ? action : registry.convert(action);
-        await popActionFun(ui, state);
+        const option = await popActionFun(ui, state);
+        if (option?.interrupt) {
+          break;
+        }
       }
     }
     onDone(state);
@@ -500,14 +500,16 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
     registerLayout
   ]);
   import_react13.useEffect(() => {
-    popupManager.openMenu = async (data) => {
+    popupManager.menu.open = async (data) => {
       const type = "menu";
       addPopup({ uid: `${type}-${v4_default()}`, type, ...data });
-      return new Promise((resolve) => setOnDones((onDones) => [...onDones, resolve]));
+      return new Promise((resolve) => {
+        setOnDones((onDones) => [...onDones, resolve]);
+      });
     };
   }, [popupManager, addPopup]);
   import_react13.useEffect(() => {
-    popupManager.openDialog = async (data) => {
+    popupManager.dialog.open = async (data) => {
       const type = "dialog";
       addPopup({ uid: `${type}-${v4_default()}`, type, ...data });
       return new Promise((resolve) => setOnDones((onDones) => [...onDones, resolve]));
@@ -522,7 +524,7 @@ var PopupOverlay = function({ popupManager, popupControl, registry = DEFAULT_REG
     popupManager.performActions = performActions;
   }, [popupManager, performActions]);
   import_react13.useEffect(() => {
-    popupManager.popups = popups;
+    popupManager.setPopups(popups);
   }, [popupManager, popups]);
   const onDone = import_react13.useCallback(() => {
     setOnDones((previousOnDones) => {
@@ -562,6 +564,264 @@ var attachPopup = function(root, config = {}, registry) {
   }, undefined, false, undefined, this));
   root.appendChild(rootElem);
   return { ui: popupManager, popupControl, detach: () => reactRoot.unmount() };
+};
+var usePopupLayout3 = function({ layout }) {
+  const { getLayout } = useDialogContext();
+  const layoutModel = getLayout(layout);
+  const x = layoutModel.position?.[0] || DEFAULT_HORIZONTAL_PADDING2;
+  const y = layoutModel.position?.[1] || DEFAULT_VERTICAL_PADDING2;
+  const left = layoutModel.positionFromRight ? `calc(100% - ${x}px)` : x;
+  const top = layoutModel.positionFromBottom ? `calc(100% - ${y}px)` : y;
+  const right = DEFAULT_HORIZONTAL_PADDING2;
+  const bottom = DEFAULT_VERTICAL_PADDING2;
+  const width = layoutModel.size?.[0] || undefined;
+  const height = layoutModel.size?.[1] || undefined;
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width,
+    height
+  };
+};
+var useUniquePopupOnLayout4 = function({ layout, disabled }) {
+  const [visible, setVisible] = import_react16.useState(true);
+  const { layoutReplacementCallbacks } = useDialogContext();
+  const hide = import_react16.useCallback(() => setVisible(false), [setVisible]);
+  import_react16.useEffect(() => {
+    const layoutName = typeof layout === "string" ? layout : layout.name;
+    if (layoutName && !disabled) {
+      layoutReplacementCallbacks[layoutName]?.();
+      layoutReplacementCallbacks[layoutName] = hide;
+      setVisible(true);
+    }
+  }, [disabled, hide, layout, layoutReplacementCallbacks]);
+  return { visible };
+};
+var Popup6 = function({
+  children,
+  layout,
+  fontSize,
+  disabled,
+  hidden
+}) {
+  const [h, setH] = import_react17.useState(0);
+  import_react17.useEffect(() => {
+    requestAnimationFrame(() => setH(hidden ? 10 : 100));
+  }, [setH, hidden]);
+  const { top, left, right, bottom, width, height } = usePopupLayout3({
+    layout
+  });
+  const { visible } = useUniquePopupOnLayout4({ layout, disabled });
+  return !hidden && jsx_dev_runtime9.jsxDEV("div", {
+    style: {
+      position: "absolute",
+      left,
+      top,
+      right,
+      bottom,
+      width,
+      height,
+      fontSize: fontSize ?? DEFAULT_FONT_SIZE2,
+      display: !visible ? "none" : ""
+    },
+    children: jsx_dev_runtime9.jsxDEV("div", {
+      className: "pop-up",
+      style: {
+        ...POPUP_CSS2,
+        width: "100%",
+        height: `${h}%`,
+        overflow: "hidden",
+        transition: "height .2s",
+        outlineColor: disabled ? "whitesmoke" : "white"
+      },
+      children: jsx_dev_runtime9.jsxDEV("div", {
+        className: "double-border",
+        style: {
+          ...DOUBLE_BORDER_CSS2,
+          height: `calc(100% - ${DOUBLE_BORDER_HEIGHT_OFFSET2}px)`,
+          pointerEvents: disabled ? "none" : undefined,
+          borderColor: disabled ? "silver" : "white",
+          color: disabled ? "whitesmoke" : "white"
+        },
+        children
+      }, undefined, false, undefined, this)
+    }, undefined, false, undefined, this)
+  }, undefined, false, undefined, this);
+};
+var Dialog3 = function({ dialog, ui, onDone }) {
+  const text = "sample";
+  const disabled = false;
+  return jsx_dev_runtime10.jsxDEV(Popup6, {
+    popUid: dialog.uid,
+    layout: dialog.layout ?? {},
+    fontSize: dialog.style?.fontSize,
+    disabled,
+    children: jsx_dev_runtime10.jsxDEV("div", {
+      style: {
+        padding: 10,
+        width: "100%",
+        height: "100%"
+      },
+      onClick: () => console.log("ACTION"),
+      children: jsx_dev_runtime10.jsxDEV("progressive-text", {
+        period: "30",
+        children: text
+      }, undefined, false, undefined, this)
+    }, undefined, false, undefined, this)
+  }, undefined, false, undefined, this);
+};
+var getBehavior2 = function(behavior) {
+  if (typeof behavior === "string") {
+    return MenuBehaviorEnum2[behavior] ?? MenuItemBehaviorDefault2;
+  } else {
+    return behavior ?? MenuItemBehaviorDefault2;
+  }
+};
+var useMenu3 = function({ menuData, ui, onDone }) {
+  const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
+  const [menuHoverEnabled, setMenuHoverEnabled] = import_react18.useState(false);
+  const [hidden, setHidden] = import_react18.useState(false);
+  const onMenuAction = import_react18.useCallback((index) => {
+    const itemFlex = index !== undefined ? menuData.items.at(index) : selectedItem;
+    const item = typeof itemFlex === "string" ? { label: itemFlex } : itemFlex;
+    if (!item) {
+      return;
+    }
+    const behavior = getBehavior2(item.behavior ?? menuData.behavior);
+  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden]);
+  const { lockState } = useControlsLock({
+    uid: menuData.uid,
+    listener: import_react18.useMemo(() => ({
+      onAction: onMenuAction,
+      onUp() {
+        setMenuHoverEnabled(false);
+        moveSelection(-1);
+      },
+      onDown() {
+        setMenuHoverEnabled(false);
+        moveSelection(1);
+      }
+    }), [moveSelection, setMenuHoverEnabled, onMenuAction])
+  });
+  return {
+    selectedItem,
+    select,
+    scroll,
+    scrollUp,
+    scrollDown,
+    disabled: lockState === LockStatus.LOCKED,
+    menuHoverEnabled,
+    enableMenuHover: import_react18.useCallback(!menuHoverEnabled ? () => setMenuHoverEnabled(true) : () => {
+    }, [menuHoverEnabled]),
+    hidden,
+    onMenuAction
+  };
+};
+var Menu3 = function({ menuData, ui, onDone }) {
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu3({ menuData, ui, onDone });
+  const layout = menuData?.layout ?? {};
+  return jsx_dev_runtime11.jsxDEV(Popup6, {
+    popUid: menuData.uid,
+    layout,
+    fontSize: menuData.style?.fontSize,
+    disabled,
+    hidden,
+    children: [
+      jsx_dev_runtime11.jsxDEV("svg", {
+        xmlns: "http://www.w3.org/2000/svg",
+        style: {
+          position: "absolute",
+          height: 20,
+          marginTop: -15,
+          width: 200,
+          display: scroll > 0 ? "" : "none",
+          left: `calc(50% - 100px)`
+        },
+        onMouseDown: () => scrollUp(),
+        children: jsx_dev_runtime11.jsxDEV("polygon", {
+          points: "100,10 110,20 90,20",
+          style: {
+            fill: "white"
+          }
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this),
+      jsx_dev_runtime11.jsxDEV("div", {
+        style: {
+          paddingTop: 10,
+          cursor: menuHoverEnabled ? "inherit" : "auto"
+        },
+        children: jsx_dev_runtime11.jsxDEV("div", {
+          style: { height: `calc(100% - 27px)`, overflow: "hidden" },
+          children: jsx_dev_runtime11.jsxDEV("div", {
+            style: { marginTop: scroll * -31, transition: "margin-top .2s" },
+            children: z(menuData.items, (item, index) => {
+              const style = {
+                color: selectedItem === item ? "black" : disabled ? "whitesmoke" : "white",
+                backgroundColor: selectedItem !== item ? "black" : disabled ? "whitesmoke" : "white"
+              };
+              return jsx_dev_runtime11.jsxDEV("div", {
+                style,
+                onMouseMove: () => {
+                  enableMenuHover();
+                  select(index);
+                },
+                onMouseOver: menuHoverEnabled ? () => select(index) : undefined,
+                onClick: menuHoverEnabled ? () => onMenuAction(index) : undefined,
+                children: typeof item === "string" ? item : item?.label
+              }, index, false, undefined, this);
+            })
+          }, undefined, false, undefined, this)
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this),
+      jsx_dev_runtime11.jsxDEV("svg", {
+        xmlns: "http://www.w3.org/2000/svg",
+        style: {
+          position: "absolute",
+          height: 20,
+          width: 200,
+          marginTop: -5,
+          display: scroll + (menuData.maxRows ?? menuData.items.length.valueOf()) < menuData.items.length.valueOf() ? "" : "none",
+          left: `calc(50% - 100px)`
+        },
+        onMouseDown: () => scrollDown(),
+        children: jsx_dev_runtime11.jsxDEV("polygon", {
+          points: "100,20 110,10 90,10",
+          style: {
+            fill: "white"
+          }
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+};
+var DialogManager = function({ ui }) {
+  return jsx_dev_runtime13.jsxDEV(jsx_dev_runtime13.Fragment, {}, undefined, false, undefined, this);
+};
+var attachDialog = function(root, config = {}, registry = DEFAULT_REGISTRY2) {
+  const { offsetLeft: left, offsetTop: top } = root;
+  const rootElem = document.createElement("div");
+  const reactRoot = client2.default.createRoot(rootElem);
+  const style = {
+    ...STYLE2,
+    top,
+    left,
+    pointerEvents: config.disableTap ? "none" : undefined
+  };
+  const ui = {
+    performActions() {
+    }
+  };
+  const dom = jsx_dev_runtime14.jsxDEV("div", {
+    style,
+    children: jsx_dev_runtime14.jsxDEV(DialogManager, {
+      ui
+    }, undefined, false, undefined, this)
+  }, undefined, false, undefined, this);
+  reactRoot.render(dom);
+  root.appendChild(rootElem);
+  return { detach: () => reactRoot.unmount() };
 };
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -24096,10 +24356,14 @@ class PopupManager {
   removeDialogListener(listener) {
     this.#listeners.delete(listener);
   }
-  async openDialog(_dialog) {
-  }
-  async openMenu(_menu) {
-  }
+  dialog = {
+    async open(_dialog) {
+    }
+  };
+  menu = {
+    async open(_menu) {
+    }
+  };
   closePopup() {
   }
   nextMessage() {
@@ -24108,12 +24372,15 @@ class PopupManager {
   }
   async performActions(_actions, _state, _onDone) {
   }
-  popups = [];
+  #popups = [];
   getPopups() {
-    return this.popups;
+    return this.#popups;
+  }
+  setPopups(popups) {
+    return popups;
   }
   setPopupData(index, data) {
-    this.popups[index] = data;
+    this.#popups[index] = data;
   }
   registerLayout(_layout) {
   }
@@ -24276,13 +24543,13 @@ var import_react12 = __toESM(require_react(), 1);
 
 class OpenDialogConvertor {
   convert(model) {
-    return (ui) => ui.openDialog(model.dialog);
+    return (ui) => ui.dialog.open(model.dialog);
   }
 }
 
 class OpenMenuConvertor {
   convert(model) {
-    return (ui) => ui.openMenu(model.menu);
+    return (ui) => ui.menu.open(model.menu);
   }
 }
 
@@ -24317,6 +24584,81 @@ class ConversionRegistry {
 }
 var jsx_dev_runtime7 = __toESM(require_jsx_dev_runtime(), 1);
 var STYLE = {
+  position: "absolute",
+  width: "100%",
+  height: "100%",
+  userSelect: "none"
+};
+var client2 = __toESM(require_client(), 1);
+var import_react17 = __toESM(require_react(), 1);
+var import_react15 = __toESM(require_react(), 1);
+var import_react14 = __toESM(require_react(), 1);
+var DEFAULT_GAME_CONTEXT2 = {
+  layoutReplacementCallbacks: {},
+  getLayout(_layout) {
+    return {};
+  }
+};
+var Context3 = import_react14.default.createContext(DEFAULT_GAME_CONTEXT2);
+var Context_default2 = Context3;
+var jsx_dev_runtime8 = __toESM(require_jsx_dev_runtime(), 1);
+var useDialogContext = () => {
+  const context = import_react15.useContext(Context_default2);
+  if (!context) {
+    throw new Error("useGameContext must be used within a Provider");
+  }
+  return context;
+};
+var DEFAULT_HORIZONTAL_PADDING2 = 100;
+var DEFAULT_VERTICAL_PADDING2 = 50;
+var import_react16 = __toESM(require_react(), 1);
+var jsx_dev_runtime9 = __toESM(require_jsx_dev_runtime(), 1);
+var POPUP_CSS2 = {
+  outline: "3px solid #fff",
+  backgroundColor: "black",
+  borderRadius: 12,
+  padding: 3,
+  boxShadow: "10px 10px 0px #000000cc",
+  transition: "outline-color .3s"
+};
+var DOUBLE_BORDER_CSS2 = {
+  border: "3px solid white",
+  borderRadius: 10,
+  outline: "3px solid black",
+  color: "white",
+  padding: 10,
+  cursor: "pointer",
+  transition: "border-color .3s"
+};
+var DOUBLE_BORDER_HEIGHT_OFFSET2 = 27;
+var DEFAULT_FONT_SIZE2 = 24;
+var jsx_dev_runtime10 = __toESM(require_jsx_dev_runtime(), 1);
+var import_react18 = __toESM(require_react(), 1);
+var MenuBehaviorEnum2;
+(function(MenuBehaviorEnum3) {
+  MenuBehaviorEnum3[MenuBehaviorEnum3["NONE"] = 0] = "NONE";
+  MenuBehaviorEnum3[MenuBehaviorEnum3["CLOSE_ON_SELECT"] = 1] = "CLOSE_ON_SELECT";
+  MenuBehaviorEnum3[MenuBehaviorEnum3["CLOSE_AFTER_SELECT"] = 2] = "CLOSE_AFTER_SELECT";
+  MenuBehaviorEnum3[MenuBehaviorEnum3["HIDE_ON_SELECT"] = 3] = "HIDE_ON_SELECT";
+})(MenuBehaviorEnum2 || (MenuBehaviorEnum2 = {}));
+var MenuItemBehaviorDefault2 = MenuBehaviorEnum2.NONE;
+var jsx_dev_runtime11 = __toESM(require_jsx_dev_runtime(), 1);
+var jsx_dev_runtime12 = __toESM(require_jsx_dev_runtime(), 1);
+var DEFAULT_REGISTRY2 = {
+  dialog: (data, ui, onDone) => jsx_dev_runtime12.jsxDEV(Dialog3, {
+    dialog: data,
+    ui,
+    onDone
+  }, data.uid, false, undefined, null),
+  menu: (data, ui, onDone) => jsx_dev_runtime12.jsxDEV(Menu3, {
+    menuData: data,
+    ui,
+    onDone
+  }, data.uid, false, undefined, null)
+};
+var jsx_dev_runtime13 = __toESM(require_jsx_dev_runtime(), 1);
+var jsx_dev_runtime14 = __toESM(require_jsx_dev_runtime(), 1);
+var STYLE2 = {
   position: "absolute",
   width: "100%",
   height: "100%",
@@ -24405,5 +24747,6 @@ var startMenuAction = { menu: {
 } };
 export {
   startMenuAction,
-  attachPopup
+  attachPopup,
+  attachDialog
 };

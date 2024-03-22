@@ -5,5 +5,4 @@ import { Message } from "./Message";
 export interface DialogData extends PopupData {
   type?: "dialog",
   messages: List<Message> | Message[];
-  onClose?: () => void;
 }

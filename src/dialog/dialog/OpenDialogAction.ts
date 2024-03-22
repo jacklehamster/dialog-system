@@ -1,9 +1,9 @@
-import { DialogData } from "../dialog/DialogData";
-import { PopActionFunction } from "./PopAction";
-import { PopActionConvertor } from "./PopActionConvertor";
+import { PopActionConvertor } from "../actions/PopActionConvertor";
+import { DialogModel } from "../model/DialogModel";
+import { PopActionFunction } from "../model/PopAction";
 
 export interface OpenDialogModel {
-  dialog: DialogData;
+  dialog: DialogModel;
 }
 
 export class OpenDialogConvertor implements PopActionConvertor<OpenDialogModel> {

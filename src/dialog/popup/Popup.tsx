@@ -2,10 +2,11 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
-import React, { CSSProperties, useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 import './css/Popup.css';
-import { Layout } from './Layout';
-import { usePopupLayout } from './usePopupLayout';
+import { Layout } from '../model/Layout';
+import { usePopupLayout } from '../layout/usePopupLayout';
+import { useUniquePopupOnLayout } from '../layout/useUniquePopupOnLayout';
 
 interface Props {
   popUid?: string;
@@ -14,7 +15,6 @@ interface Props {
   fontSize: number | undefined;
   disabled?: boolean;
   hidden?: boolean;
-  displayNone?: boolean;
 }
 
 //  Hack until I get proper CSS to work
@@ -50,7 +50,6 @@ export function Popup({
   fontSize,
   disabled,
   hidden,
-  displayNone,
 }: Props) {
   const [h, setH] = useState(0);
   useEffect(() => {
@@ -61,13 +60,16 @@ export function Popup({
     layout,
   });
 
+  const { visible } = useUniquePopupOnLayout({ layout, disabled });
+
+
   return !hidden && (
     <div
       style={{
         position: 'absolute',
         left, top, right, bottom, width, height,
         fontSize: fontSize ?? DEFAULT_FONT_SIZE,
-        display: displayNone ? "none": "",
+        display: !visible ? "none": "",
       }}
     >
       <div

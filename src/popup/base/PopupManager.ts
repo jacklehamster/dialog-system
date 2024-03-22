@@ -6,6 +6,7 @@ import { PopAction } from '../actions/PopAction';
 import { PopState } from '../actions/PopState';
 import { ElemData } from './usePopups';
 import { LayoutModel } from './Layout';
+import { OnDoneOptions } from './PopupOverlay';
 
 export class PopupManager implements UserInterface {
   #lockUids: string[] = [];
@@ -29,10 +30,16 @@ export class PopupManager implements UserInterface {
     this.#listeners.delete(listener);
   }
 
-  async openDialog(_dialog: DialogData): Promise<void> {
+  dialog = {
+    async open(_dialog: DialogData): Promise<OnDoneOptions> {
+    }
   }
-  async openMenu(_menu: MenuData): Promise<void> {
+
+  menu = {
+    async open(_menu: MenuData): Promise<OnDoneOptions> {
+    }
   }
+
   closePopup(): void {
   }
   nextMessage(): void {
@@ -41,12 +48,15 @@ export class PopupManager implements UserInterface {
   }
   async performActions(_actions: (PopAction | undefined)[], _state: PopState, _onDone: (state: PopState) => void): Promise<void> {
   }
-  popups: ElemData[] = [];
+  #popups: ElemData[] = [];
   getPopups(): ElemData[] {
-    return this.popups;
+    return this.#popups;
+  }
+  setPopups(popups: ElemData[]) {
+    return popups;
   }
   setPopupData(index: number, data: ElemData): void {
-    this.popups[index] = data;
+    this.#popups[index] = data;
   }
   registerLayout(_layout: LayoutModel | LayoutModel[]): void {
   }

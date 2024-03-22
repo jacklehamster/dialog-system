@@ -18,9 +18,13 @@ interface Props {
   registry?: Record<string, (data: ElemData, ui: UserInterface, onDone: ()=> void) => JSX.Element>;  
 }
 
+export type OnDoneOptions = void | undefined | {
+  interrupt?: boolean;
+}
+
 export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_REGISTRY }: Props) {
   const { popups, addPopup, closePopup, topPopupUid } = usePopups();
-  const [, setOnDones] = useState<(() => void)[]>([]);
+  const [, setOnDones] = useState<((options?: OnDoneOptions) => void)[]>([]);
   const layoutReplacementCallbacks = useMemo<Record<string, () => void>>(() => ({
   }), []);
   const layoutModels = useMemo<Record<string, LayoutModel>>(() => ({
@@ -73,20 +77,20 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
   );
 
   useEffect(() => {
-    popupManager.openMenu = async (data) => {
+    popupManager.menu.open = async (data) => {
       const type = 'menu';
       addPopup({ uid: `${type}-${uuidv4()}`, type, ...data });
-      return new Promise((resolve) =>
-        setOnDones((onDones) => [...onDones, resolve]),
-      );
+      return new Promise<OnDoneOptions>((resolve) => {
+        setOnDones((onDones) => [...onDones, resolve]);
+      });
     };
   }, [popupManager, addPopup]);
 
   useEffect(() => {
-    popupManager.openDialog = async (data) => {
+    popupManager.dialog.open = async (data) => {
       const type = 'dialog';
       addPopup({ uid: `${type}-${uuidv4()}`, type, ...data });
-      return new Promise((resolve) =>
+      return new Promise<OnDoneOptions>((resolve) =>
         setOnDones((onDones) => [...onDones, resolve]),
       );
     };
@@ -105,7 +109,7 @@ export function PopupOverlay({ popupManager, popupControl, registry = DEFAULT_RE
   }, [popupManager, performActions]);
 
   useEffect(() => {
-    popupManager.popups = popups;
+    popupManager.setPopups(popups);
   }, [popupManager, popups]);
 
   const onDone = useCallback(() => {

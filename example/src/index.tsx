@@ -1,4 +1,4 @@
-import { attachPopup, PopAction } from "dialog-system";
+import { attachPopup, PopAction, attachDialog } from "dialog-system";
 
 const startMenuAction: PopAction = { menu: {
   items: [
@@ -80,4 +80,4 @@ const startMenuAction: PopAction = { menu: {
   ],
 } };
 
-export { attachPopup, startMenuAction };
+export { attachPopup, startMenuAction, attachDialog };

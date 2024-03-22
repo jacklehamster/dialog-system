@@ -1,21 +1,18 @@
 import { map } from 'abstract-list';
-import { Popup } from '../base/Popup';
-import { MenuData } from './MenuData';
-import { UserInterface } from '../UserInterface';
-import { useMenu } from './useMenu';
 import { CSSProperties } from 'react';
-import { useUniquePopupOnLayout } from '../base/useUniquePopupOnLayout';
+import { UserInterface } from '../ui/UserInterface';
+import { MenuData } from '../..';
+import { useMenu } from './useMenu';
+import { Popup } from '../popup/Popup';
 
 interface Props {
   menuData: MenuData;
   ui: UserInterface;
-  onDone(): void;
 }
 
-export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu({ menuData, ui, onDone });
+export function Menu({ menuData, ui }: Props): JSX.Element {
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu({ menuData, ui });
   const layout = menuData?.layout ?? {};
-  const { visible } = useUniquePopupOnLayout({ layout, disabled });
 
   return (
     <Popup
@@ -24,7 +21,6 @@ export function Menu({ menuData, ui, onDone }: Props): JSX.Element {
       fontSize={menuData.style?.fontSize}
       disabled={disabled}
       hidden={hidden}
-      displayNone={!visible}
     >
       <svg xmlns="http://www.w3.org/2000/svg" style={{
           position: "absolute",

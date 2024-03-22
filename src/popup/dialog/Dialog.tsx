@@ -3,7 +3,7 @@ import { DialogData } from './DialogData';
 import { useDialog } from './useDialog';
 import { UserInterface } from '../UserInterface';
 import { useGameContext } from '../context/Provider';
-import './text/ProgressiveText';
+import '../../dialog/text/ProgressiveText';
 import { useUniquePopupOnLayout } from '../base/useUniquePopupOnLayout';
 
 interface Props {
@@ -24,7 +24,6 @@ export function Dialog({ dialogData, ui, onDone }: Props): JSX.Element {
       fontSize={dialogData.style?.fontSize}
       disabled={disabled}
       displayNone={!visible}
-      onDone={onDone}
     >
       <div style={{
         padding: 10,
