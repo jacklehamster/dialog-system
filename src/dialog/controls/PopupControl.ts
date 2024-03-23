@@ -3,6 +3,18 @@ import { PopupControlListener } from "./PopupControlListener";
 export class PopupControl implements PopupControlListener {
   #listeners = new Set<PopupControlListener>();
 
+  setControlLock(uid?: string): void {
+    this.controlLock = uid;
+  }
+
+  removeControlsLock(uid?: string): void {
+    if (uid === this.controlLock) {
+      this.controlLock = undefined;
+    }
+  }
+
+  controlLock?: string;
+
   onUp(): void {
     for (const listener of this.#listeners) {
       listener.onUp?.();

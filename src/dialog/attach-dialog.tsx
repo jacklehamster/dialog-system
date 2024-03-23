@@ -3,10 +3,13 @@ import { DEFAULT_REGISTRY } from "./registry/DefaultRegistry";
 import { DialogManager } from "./dialog/DialogManager";
 import { UserInterface } from "./ui/UserInterface";
 import { Model } from './model/Model';
+import { PopupControl } from './controls/PopupControl';
 
 
 interface AttachDialogResults {
   detach: () => void;
+  ui: UserInterface;
+  popupControl: PopupControl;
 }
 
 const STYLE: React.CSSProperties = {
@@ -29,12 +32,13 @@ export function attachDialog(
     pointerEvents: config.disableTap ? 'none' : undefined,
   };
   const ui: UserInterface = {
-    performActions() {},
+    performActions() { console.log("PERFORM ACTION");},
   };
+  const popupControl = new PopupControl();
   const dom = <div style={style}>
-    <DialogManager ui={ui} registry={registry} />
+    <DialogManager ui={ui} registry={registry} popupControl={popupControl} />
   </div>;
   reactRoot.render(dom);
   root.appendChild(rootElem);
-  return { detach: () => reactRoot.unmount() };
+  return { ui, detach: () => reactRoot.unmount(), popupControl };
 }

@@ -1,11 +1,8 @@
+import { State } from "../state/State";
 import { PopAction } from "./PopAction";
 
-export interface ActionScriptModel {
+export interface ActionScriptModel extends State {
   actions: PopAction[];
-  state?: {
-    uid: string;
-    index: number;
-  };
 }
 
 export type ActionScript = PopAction | PopAction[] | ActionScriptModel;
