@@ -13,10 +13,10 @@ interface Props {
 }
 
 export function useControlsLock({ uid, listener }: Props) {
-  const { popupControl } = useDialogContext();
+  const { popupControl, addControlsLock, removeControlsLock, topPopupUid } = useDialogContext();
   const [locked, setLocked] = useState(false);
 
-  const lockState = popupControl.controlLock === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
+  const lockState = topPopupUid === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
 
   useEffect((): (() => void) | void => {
     if (lockState) {
@@ -31,10 +31,10 @@ export function useControlsLock({ uid, listener }: Props) {
 
   useEffect(() => {
     if (uid && locked) {
-      popupControl.setControlLock(uid);
-      return () => popupControl.removeControlsLock(uid);
+      addControlsLock(uid);
+      return () => removeControlsLock(uid);
     }
-  }, [popupControl, locked, uid]);
+  }, [addControlsLock, removeControlsLock, locked, uid]);
 
   return { lockState };
 }

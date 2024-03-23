@@ -23,7 +23,7 @@
   </body>
   <script type="module">
     import { attachPopup, startMenuAction, attachDialog } from './dist/index.js';
-    const { ui, popupControl, detach } = attachDialog(document.getElementById("root"));
+    const { ui, popupControl, detach } = attachPopup(document.getElementById("root"));
     window.popupControl = popupControl;
     window.ui = ui;
     window.detach = detach;
