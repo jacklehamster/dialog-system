@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Model } from "../model/Model";
 import { UserInterface } from "../ui/UserInterface";
+import { Dialog } from "./Dialog";
 
 export interface Props {
   ui: UserInterface;
@@ -8,5 +10,7 @@ export interface Props {
 
 export function DialogManager({ ui, registry }: Props) {
   
-  return <></>;
+  return <Dialog ui={ui} dialog={useMemo(() => ({
+    messages: ["a", "b", "c"],
+  }), [])} />;
 }

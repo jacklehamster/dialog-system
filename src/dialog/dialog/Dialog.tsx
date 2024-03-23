@@ -11,13 +11,14 @@ interface Props {
 }
 
 export function Dialog({ dialog, ui }: Props): JSX.Element {
-  const message = useMemo<MessageModel | undefined>(() => {
-    if (dialog?.state) {
-      const message = dialog.messages.at(dialog.state.index);
-      return typeof(message) == "string" ? { text: message} : message;
-    }
-    return undefined;
-  }, [dialog]);
+  // const message = useMemo<MessageModel | undefined>(() => {
+  //   if (dialog?.state) {
+  //     const message = dialog.messages.at(dialog.state.index);
+  //     return typeof(message) == "string" ? { text: message} : message;
+  //   }
+  //   return undefined;
+  // }, [dialog]);
+  const message = { text: "TEST" };
   const disabled = false;
 
   return (

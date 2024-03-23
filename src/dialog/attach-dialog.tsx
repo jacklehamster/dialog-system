@@ -3,10 +3,13 @@ import { DEFAULT_REGISTRY } from "./registry/DefaultRegistry";
 import { DialogManager } from "./dialog/DialogManager";
 import { UserInterface } from "./ui/UserInterface";
 import { Model } from './model/Model';
+import { PopupControl } from './controls/PopupControl';
 
 
 interface AttachDialogResults {
   detach: () => void;
+  ui: UserInterface;
+  popupControl: PopupControl;
 }
 
 const STYLE: React.CSSProperties = {
@@ -31,10 +34,11 @@ export function attachDialog(
   const ui: UserInterface = {
     performActions() {},
   };
+  const popupControl = new PopupControl();
   const dom = <div style={style}>
     <DialogManager ui={ui} registry={registry} />
   </div>;
   reactRoot.render(dom);
   root.appendChild(rootElem);
-  return { detach: () => reactRoot.unmount() };
+  return { ui, popupControl, detach: () => reactRoot.unmount() };
 }

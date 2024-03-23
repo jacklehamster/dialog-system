@@ -650,8 +650,8 @@ var Popup6 = function({
     }, undefined, false, undefined, this)
   }, undefined, false, undefined, this);
 };
-var Dialog3 = function({ dialog, ui, onDone }) {
-  const text = "sample";
+var Dialog3 = function({ dialog, ui }) {
+  const message = { text: "TEST" };
   const disabled = false;
   return jsx_dev_runtime10.jsxDEV(Popup6, {
     popUid: dialog.uid,
@@ -667,7 +667,7 @@ var Dialog3 = function({ dialog, ui, onDone }) {
       onClick: () => console.log("ACTION"),
       children: jsx_dev_runtime10.jsxDEV("progressive-text", {
         period: "30",
-        children: text
+        children: message?.text
       }, undefined, false, undefined, this)
     }, undefined, false, undefined, this)
   }, undefined, false, undefined, this);
@@ -679,11 +679,48 @@ var getBehavior2 = function(behavior) {
     return behavior ?? MenuItemBehaviorDefault2;
   }
 };
-var useMenu3 = function({ menuData, ui, onDone }) {
-  const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
-  const [menuHoverEnabled, setMenuHoverEnabled] = import_react18.useState(false);
-  const [hidden, setHidden] = import_react18.useState(false);
-  const onMenuAction = import_react18.useCallback((index) => {
+var useSelection3 = function({ menuData }) {
+  const [selectedIndex, setSelectedIndex] = import_react18.useState(0);
+  const [scroll, setScroll] = import_react18.useState(0);
+  const scrollDown = import_react18.useCallback(() => {
+    const len = menuData.items.length.valueOf();
+    setScroll((scroll2) => Math.min(len - (menuData.maxRows ?? len), scroll2 + 1));
+  }, [setScroll, menuData]);
+  const scrollUp = import_react18.useCallback(() => setScroll((scroll2) => Math.max(0, scroll2 - 1)), [setScroll]);
+  import_react18.useEffect(() => {
+    if (menuData.maxRows) {
+      if (selectedIndex - scroll >= menuData.maxRows) {
+        scrollDown();
+      } else if (selectedIndex - scroll < 0) {
+        scrollUp();
+      }
+    }
+  }, [selectedIndex, scroll, menuData, scrollUp, scrollDown]);
+  const select = import_react18.useCallback((index) => {
+    const len = menuData.items.length.valueOf();
+    setSelectedIndex(Math.max(0, Math.min(index, len - 1)));
+  }, [setSelectedIndex, menuData]);
+  const moveSelection = import_react18.useCallback((dy) => {
+    if (dy) {
+      const len = menuData.items.length.valueOf();
+      setSelectedIndex((index) => Math.max(0, Math.min(index + dy, len - 1)));
+    }
+  }, [setSelectedIndex, menuData]);
+  const selectedItem = import_react18.useMemo(() => menuData.items.at(selectedIndex), [menuData, selectedIndex]);
+  return {
+    select,
+    moveSelection,
+    selectedItem,
+    scroll,
+    scrollUp,
+    scrollDown
+  };
+};
+var useMenu3 = function({ menuData, ui }) {
+  const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection3({ menuData });
+  const [menuHoverEnabled, setMenuHoverEnabled] = import_react19.useState(false);
+  const [hidden, setHidden] = import_react19.useState(false);
+  const onMenuAction = import_react19.useCallback((index) => {
     const itemFlex = index !== undefined ? menuData.items.at(index) : selectedItem;
     const item = typeof itemFlex === "string" ? { label: itemFlex } : itemFlex;
     if (!item) {
@@ -693,7 +730,7 @@ var useMenu3 = function({ menuData, ui, onDone }) {
   }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden]);
   const { lockState } = useControlsLock({
     uid: menuData.uid,
-    listener: import_react18.useMemo(() => ({
+    listener: import_react19.useMemo(() => ({
       onAction: onMenuAction,
       onUp() {
         setMenuHoverEnabled(false);
@@ -713,14 +750,14 @@ var useMenu3 = function({ menuData, ui, onDone }) {
     scrollDown,
     disabled: lockState === LockStatus.LOCKED,
     menuHoverEnabled,
-    enableMenuHover: import_react18.useCallback(!menuHoverEnabled ? () => setMenuHoverEnabled(true) : () => {
+    enableMenuHover: import_react19.useCallback(!menuHoverEnabled ? () => setMenuHoverEnabled(true) : () => {
     }, [menuHoverEnabled]),
     hidden,
     onMenuAction
   };
 };
-var Menu3 = function({ menuData, ui, onDone }) {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu3({ menuData, ui, onDone });
+var Menu3 = function({ menuData, ui }) {
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu3({ menuData, ui });
   const layout = menuData?.layout ?? {};
   return jsx_dev_runtime11.jsxDEV(Popup6, {
     popUid: menuData.uid,
@@ -796,8 +833,13 @@ var Menu3 = function({ menuData, ui, onDone }) {
     ]
   }, undefined, true, undefined, this);
 };
-var DialogManager = function({ ui }) {
-  return jsx_dev_runtime13.jsxDEV(jsx_dev_runtime13.Fragment, {}, undefined, false, undefined, this);
+var DialogManager = function({ ui, registry }) {
+  return jsx_dev_runtime13.jsxDEV(Dialog3, {
+    ui,
+    dialog: import_react20.useMemo(() => ({
+      messages: ["a", "b", "c"]
+    }), [])
+  }, undefined, false, undefined, this);
 };
 var attachDialog = function(root, config = {}, registry = DEFAULT_REGISTRY2) {
   const { offsetLeft: left, offsetTop: top } = root;
@@ -813,15 +855,17 @@ var attachDialog = function(root, config = {}, registry = DEFAULT_REGISTRY2) {
     performActions() {
     }
   };
+  const popupControl = new PopupControl4;
   const dom = jsx_dev_runtime14.jsxDEV("div", {
     style,
     children: jsx_dev_runtime14.jsxDEV(DialogManager, {
-      ui
+      ui,
+      registry
     }, undefined, false, undefined, this)
   }, undefined, false, undefined, this);
   reactRoot.render(dom);
   root.appendChild(rootElem);
-  return { detach: () => reactRoot.unmount() };
+  return { ui, popupControl, detach: () => reactRoot.unmount() };
 };
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -24633,7 +24677,7 @@ var DOUBLE_BORDER_CSS2 = {
 var DOUBLE_BORDER_HEIGHT_OFFSET2 = 27;
 var DEFAULT_FONT_SIZE2 = 24;
 var jsx_dev_runtime10 = __toESM(require_jsx_dev_runtime(), 1);
-var import_react18 = __toESM(require_react(), 1);
+var import_react19 = __toESM(require_react(), 1);
 var MenuBehaviorEnum2;
 (function(MenuBehaviorEnum3) {
   MenuBehaviorEnum3[MenuBehaviorEnum3["NONE"] = 0] = "NONE";
@@ -24642,21 +24686,46 @@ var MenuBehaviorEnum2;
   MenuBehaviorEnum3[MenuBehaviorEnum3["HIDE_ON_SELECT"] = 3] = "HIDE_ON_SELECT";
 })(MenuBehaviorEnum2 || (MenuBehaviorEnum2 = {}));
 var MenuItemBehaviorDefault2 = MenuBehaviorEnum2.NONE;
+var import_react18 = __toESM(require_react(), 1);
 var jsx_dev_runtime11 = __toESM(require_jsx_dev_runtime(), 1);
 var jsx_dev_runtime12 = __toESM(require_jsx_dev_runtime(), 1);
 var DEFAULT_REGISTRY2 = {
-  dialog: (data, ui, onDone) => jsx_dev_runtime12.jsxDEV(Dialog3, {
+  dialog: (data, ui) => jsx_dev_runtime12.jsxDEV(Dialog3, {
     dialog: data,
-    ui,
-    onDone
+    ui
   }, data.uid, false, undefined, null),
-  menu: (data, ui, onDone) => jsx_dev_runtime12.jsxDEV(Menu3, {
+  menu: (data, ui) => jsx_dev_runtime12.jsxDEV(Menu3, {
     menuData: data,
-    ui,
-    onDone
+    ui
   }, data.uid, false, undefined, null)
 };
+var import_react20 = __toESM(require_react(), 1);
 var jsx_dev_runtime13 = __toESM(require_jsx_dev_runtime(), 1);
+
+class PopupControl4 {
+  #listeners = new Set;
+  onUp() {
+    for (const listener of this.#listeners) {
+      listener.onUp?.();
+    }
+  }
+  onDown() {
+    for (const listener of this.#listeners) {
+      listener.onDown?.();
+    }
+  }
+  onAction() {
+    for (const listener of this.#listeners) {
+      listener.onAction?.();
+    }
+  }
+  addListener(listener) {
+    this.#listeners.add(listener);
+  }
+  removeListener(listener) {
+    this.#listeners.delete(listener);
+  }
+}
 var jsx_dev_runtime14 = __toESM(require_jsx_dev_runtime(), 1);
 var STYLE2 = {
   position: "absolute",

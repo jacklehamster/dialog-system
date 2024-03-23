@@ -13,28 +13,29 @@ interface Props {
 }
 
 export function useControlsLock({ uid, listener }: Props) {
-  const { popupControl, addControlsLock, removeControlsLock, topPopupUid } = useDialogContext();
-  const [locked, setLocked] = useState(false);
+  //  const { popupControl, addControlsLock, removeControlsLock, topPopupUid } = useDialogContext();
+  // const [locked, setLocked] = useState(false);
 
-  const lockState = topPopupUid === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
+  // const lockState = topPopupUid === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
 
-  useEffect((): (() => void) | void => {
-    if (lockState) {
-      setLocked(true);
-      popupControl.addListener(listener);
-      return () => {
-        popupControl.removeListener(listener);
-        setLocked(false);
-      };
-    }
-  }, [listener, setLocked, popupControl, lockState]);
+  // useEffect((): (() => void) | void => {
+  //   if (lockState) {
+  //     setLocked(true);
+  //     popupControl.addListener(listener);
+  //     return () => {
+  //       popupControl.removeListener(listener);
+  //       setLocked(false);
+  //     };
+  //   }
+  // }, [listener, setLocked, popupControl, lockState]);
 
-  useEffect(() => {
-    if (uid && locked) {
-      addControlsLock(uid);
-      return () => removeControlsLock(uid);
-    }
-  }, [addControlsLock, removeControlsLock, locked, uid]);
+  // useEffect(() => {
+  //   if (uid && locked) {
+  //     addControlsLock(uid);
+  //     return () => removeControlsLock(uid);
+  //   }
+  // }, [addControlsLock, removeControlsLock, locked, uid]);
 
+  const lockState = LockStatus.LOCKED;
   return { lockState };
 }
