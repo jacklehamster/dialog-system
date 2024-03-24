@@ -4,11 +4,13 @@ import { ConversionRegistry } from "../actions/ConversionRegistry";
 import { v4 as uuidv4 } from 'uuid';
 import { Model } from "../model/Model";
 import { PopupModel } from "../common/PopupModel";
-import { DialogContextType } from "../context/DialogContext";
+import { LayoutContextType } from "../context/layout/LayoutContext";
 import { PopupControl } from "../controls/PopupControl";
 import { Layout, LayoutModel } from "../common/layout/Layout";
-import { Provider } from "../context/Provider";
+import { LayoutContextProvider } from "../context/layout/LayoutContextProvider";
 import { DialogState } from "../common/DialogState";
+import { ControlContextProvider } from "../context/controls/ControlContextProvider";
+import { useInitLayoutContext } from "../context/layout/useInitLayoutContext";
 
 interface Props {
   actions: PopAction[];
@@ -53,41 +55,7 @@ export function Session({ actions, elemRegistry, popupControl } : Props) {
     });
   }, [setPopups, elemRegistry, ensureData]);
 
-  const layoutReplacementCallbacks = useMemo(() => ({}), []);
-  const layoutModels = useMemo<Record<string, LayoutModel>>(() => ({
-  }), []);
-  const registerLayout = useCallback((layout: LayoutModel | LayoutModel[]) => {
-    const layouts = Array.isArray(layout) ? layout : [layout];
-    layouts.forEach(layout => {
-      if (layout.name) {
-        layoutModels[layout.name] = layout;
-      }  
-    });
-  }, [layoutModels]);
-  const getLayout = useCallback((layout: Layout) => {
-    if (typeof layout === "string") {
-      return layoutModels[layout];
-    }
-    if (layout.name) {
-      layoutModels[layout.name] = layout;
-    }
-    return layout;
-  }, [layoutModels]);
-
-  const [controlsLock, setControlsLock] = useState<string>();
-  
-  const context: DialogContextType = useMemo(() => ({
-    getLayout,
-    layoutReplacementCallbacks,
-    popupControl,
-    controlsLock,
-    setControlsLock,
-    removeControlsLock(uid: string) {
-      setControlsLock(oldUid => {
-        return oldUid === uid ? undefined : oldUid;
-      });
-    },
-  }), [layoutReplacementCallbacks, popupControl, getLayout, controlsLock, setControlsLock]);
+  const { context : layoutContext, registerLayout } = useInitLayoutContext();
 
   const conversionRegistry = useMemo(() => new ConversionRegistry({
     openDialog,
@@ -113,7 +81,9 @@ export function Session({ actions, elemRegistry, popupControl } : Props) {
     }
   }, [currentAction, conversionRegistry]);
  
-  return <Provider context={context}>
-    {popups}
-  </Provider>;
+  return <ControlContextProvider popupControl={popupControl}>
+          <LayoutContextProvider context={layoutContext}>
+            {popups}
+          </LayoutContextProvider>
+        </ControlContextProvider>;
 }

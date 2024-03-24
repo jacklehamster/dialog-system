@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { PopupControlListener } from "./PopupControlListener";
-import { useDialogContext } from "../context/Provider";
+import { useControlContext } from "../context/controls/ControlContextProvider";
 
 export enum LockStatus {
   UNLOCKED,
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function useControlsLock({ uid, listener }: Props) {
-  const { popupControl, controlsLock, setControlsLock, removeControlsLock } = useDialogContext();
+  const { popupControl, controlsLock, setControlsLock, removeControlsLock } = useControlContext();
 
   const lockState = controlsLock === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
 

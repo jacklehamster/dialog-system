@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Layout } from "./Layout";
-import { useDialogContext } from "../../context/Provider";
+import { useLayoutContext } from "../../context/layout/LayoutContextProvider";
 
 interface Props {
   layout: Layout;
@@ -9,7 +9,7 @@ interface Props {
 
 export function useUniquePopupOnLayout({ layout, disabled }: Props) {
   const [visible, setVisible] = useState(true);
-  const { layoutReplacementCallbacks } = useDialogContext();
+  const { layoutReplacementCallbacks } = useLayoutContext();
   const hide = useCallback(() => setVisible(false), [setVisible]);
   useEffect(() => {
     const layoutName = typeof layout === "string" ? layout : layout.name;

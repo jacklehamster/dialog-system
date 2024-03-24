@@ -1,4 +1,4 @@
-import { useDialogContext } from "../../context/Provider";
+import { useLayoutContext } from "../../context/layout/LayoutContextProvider";
 import { Layout } from "./Layout";
 
 const DEFAULT_HORIZONTAL_PADDING = 100;
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function usePopupLayout({ layout }: Props) {
-  const { getLayout } = useDialogContext();
+  const { getLayout } = useLayoutContext();
   const layoutModel = getLayout(layout);
   const x = layoutModel.position?.[0] || DEFAULT_HORIZONTAL_PADDING;
   const y = layoutModel.position?.[1] || DEFAULT_VERTICAL_PADDING;

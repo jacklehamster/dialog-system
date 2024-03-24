@@ -4,7 +4,6 @@ import { Menu } from "../menu/Menu";
 import { ActionMenuItemModel } from "./ActionMenuItem";
 import { getBehavior, MenuBehaviorEnum } from "./MenuBehavior";
 import { Popup } from "../common/popup/Popup";
-import { useDialogContext } from "../context/Provider";
 
 interface Props {
   menu: MenuModel;
