@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Layout } from "../model/Layout";
-import { useDialogContext } from "../context/Provider";
+import { Layout } from "./Layout";
+import { useDialogContext } from "../../context/Provider";
 
 interface Props {
   layout: Layout;

@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useState } from "react";
-import { UserInterface } from "../ui/UserInterface";
-import { MenuModel } from "../model/MenuModel";
-import { MenuItem } from "../model/MenuItem";
-import { getBehavior } from "../model/MenuBehavior";
-import { LockStatus, useControlsLock } from "@/popup/controls/useControlsLock";
-import { PopupControlListener } from "@/popup/controls/PopupControlListener";
-import { useSelection } from "./useSelection";
+import { useSelection } from "./selection/useSelection";
+import { LockStatus, useControlsLock } from "../controls/useControlsLock";
+import { PopupControlListener } from "../controls/PopupControlListener";
+import { MenuItem } from "./model/MenuItemModel";
+import { List } from "abstract-list";
 
 interface Props {
-  menuData: MenuModel;
-  ui: UserInterface;
+  uid?: string;
+  items: List<MenuItem>;
+  maxRows?: number;
+  onSelect(item: MenuItem): void;
 }
 
 interface Result {
@@ -21,48 +21,25 @@ interface Result {
   scrollDown(): void;
   menuHoverEnabled: boolean;
   enableMenuHover(): void;
-  hidden?: boolean;
   onMenuAction(index?: number): void;
 }
 
-export function useMenu({ menuData, ui }: Props): Result {
-  const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ menuData });
+export function useMenu({ uid, items, maxRows, onSelect }: Props): Result {
+  const { scroll, scrollUp, scrollDown, select, moveSelection, selectedItem } = useSelection({ items, maxRows });
   const [menuHoverEnabled, setMenuHoverEnabled] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  // const { closePopup } = useGameContext();
 
-  const onMenuAction = useCallback((index?: number) => {
-    const itemFlex = index !== undefined ? menuData.items.at(index) : selectedItem;
-    const item = typeof (itemFlex) === "string" ? { label: itemFlex } : itemFlex;
+  const onAction = useCallback((index?: number) => {
+    const item = index !== undefined ? items.at(index) : selectedItem;
     if (!item) {
       return;
     }
-    const behavior = getBehavior(item.behavior ?? menuData.behavior);
-    // if (behavior === MenuBehaviorEnum.CLOSE_ON_SELECT) {
-    //   closePopup(menuData.uid);
-    // }
-    // if (behavior === MenuBehaviorEnum.HIDE_ON_SELECT) {
-    //   setHidden(true);
-    // }
-    // const selectedAction = item.action;
-    // const actions = Array.isArray(selectedAction) ? selectedAction : [selectedAction];
-    // ui.performActions(actions, { keepMenu: behavior === MenuBehaviorEnum.NONE || behavior === MenuBehaviorEnum.HIDE_ON_SELECT }, (state) => {
-    //   if (behavior === MenuBehaviorEnum.CLOSE_AFTER_SELECT) {
-    //     closePopup(menuData.uid);
-    //   }
-    //   if (!state.keepMenu) {
-    //     onDone();
-    //   }
-    //   if (behavior === MenuBehaviorEnum.HIDE_ON_SELECT) {
-    //     setHidden(false);
-    //   }
-    // });
-  }, [menuData, moveSelection, selectedItem, ui, setMenuHoverEnabled, setHidden]);
+    onSelect(item);
+  }, [items, moveSelection, selectedItem, setMenuHoverEnabled]);
 
   const { lockState } = useControlsLock({
-    uid: menuData.uid,
+    uid,
     listener: useMemo<PopupControlListener>(() => ({
-      onAction: onMenuAction,
+      onAction,
       onUp() {
         setMenuHoverEnabled(false);
         moveSelection(-1);
@@ -71,7 +48,7 @@ export function useMenu({ menuData, ui }: Props): Result {
         setMenuHoverEnabled(false);
         moveSelection(1);
       },
-    }), [moveSelection, setMenuHoverEnabled, onMenuAction])
+    }), [moveSelection, setMenuHoverEnabled, onAction]),
   });
 
   return {
@@ -86,7 +63,6 @@ export function useMenu({ menuData, ui }: Props): Result {
       ? () => setMenuHoverEnabled(true)
       : () => { },
       [menuHoverEnabled]),
-    hidden,
-    onMenuAction,
+    onMenuAction: onAction,
   };
 }

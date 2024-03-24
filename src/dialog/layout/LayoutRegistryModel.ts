@@ -1,5 +1,6 @@
+import { UI } from "../actions/ConversionRegistry";
 import { PopActionConvertor } from "../actions/PopActionConvertor";
-import { LayoutModel } from "../model/Layout";
+import { LayoutModel } from "../common/layout/Layout";
 import { PopActionFunction } from "../model/PopAction";
 
 export interface LayoutRegistryModel {
@@ -7,7 +8,15 @@ export interface LayoutRegistryModel {
 }
 
 export class LayoutRegistryConvertor implements PopActionConvertor<LayoutRegistryModel> {
+  constructor(readonly ui: UI) {
+  }
+
   convert(model: LayoutRegistryModel): PopActionFunction {
-    return (ui) => ui.registerLayout(model.layout);
+    return async () => {
+      const layouts = Array.isArray(model.layout) ? model.layout : [model.layout];
+      layouts.forEach(layout => {
+        this.ui.registerLayout(layout);
+      });
+    };
   }
 }

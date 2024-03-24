@@ -1,8 +1,10 @@
-import { PopActionModel } from "@/popup/actions/PopActionModel";
-import { PopState } from "@/popup/actions/PopState";
-import { OnDoneOptions } from "@/popup/base/PopupOverlay";
-import { UserInterface } from "@/popup/UserInterface";
+import { PopActionModel } from "../actions/PopActionModel";
 
-export type PopActionFunction = (ui: UserInterface, state: PopState) => OnDoneOptions | Promise<OnDoneOptions>;
+export enum PopActionBehavior {
+  CONTINUE,
+  PAUSE,
+}
+
+export type PopActionFunction = () => Promise<PopActionBehavior | void>;
 
 export type PopAction = PopActionFunction | PopActionModel;

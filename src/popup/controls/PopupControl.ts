@@ -4,21 +4,15 @@ export class PopupControl implements PopupControlListener {
   #listeners = new Set<PopupControlListener>();
 
   onUp(): void {
-    for (const listener of this.#listeners) {
-      listener.onUp?.();
-    }
+    this.#listeners.forEach(l => l.onUp?.());
   }
 
   onDown(): void {
-    for (const listener of this.#listeners) {
-      listener.onDown?.();
-    }
+    this.#listeners.forEach(l => l.onDown?.());
   }
 
   onAction(): void {
-    for (const listener of this.#listeners) {
-      listener.onAction?.();
-    }
+    this.#listeners.forEach(l => l.onAction?.());
   }
 
   addListener(listener: PopupControlListener): void {

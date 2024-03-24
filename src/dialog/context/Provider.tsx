@@ -11,12 +11,12 @@ const Provider: React.FC<Props> = ({ children, context }: Props) => {
   return <Context.Provider value={context}>{children}</Context.Provider>;
 };
 
-const useDialogContext = (): DialogContextType => {
+export const useDialogContext = (): DialogContextType => {
   const context = useContext(Context);
   if (!context) {
-    throw new Error('useGameContext must be used within a Provider');
+    throw new Error('useDialogContext must be used within a Provider');
   }
   return context;
 };
 
-export { Provider, useDialogContext };
+export { Provider };

@@ -1,10 +1,10 @@
 import { Dialog } from "../dialog/Dialog";
-import { Menu } from "../menu/Menu";
+import { MenuWrapper } from "../wrapper/MenuWrapper";
 import { DialogModel } from "../model/DialogModel";
-import { MenuModel } from "../model/MenuModel";
+import { MenuModel } from "../menu/model/MenuModel";
 import { RegistryCall } from "./RegistryCall";
 
 export const DEFAULT_REGISTRY: Record<string, RegistryCall> = {
-  dialog:  (data, ui) => <Dialog key={data.uid} dialog={data as DialogModel} ui={ui} />,
-  menu: (data, ui) => <Menu key={data.uid} menuData={data as MenuModel} ui={ui} />,
+  dialog:  (data, onClose) => <Dialog key={data.uid} dialog={data as DialogModel} onClose={onClose} />,
+  menu: (data, onClose) => <MenuWrapper key={data.uid} menu={data as MenuModel} onClose={onClose} />,
 };

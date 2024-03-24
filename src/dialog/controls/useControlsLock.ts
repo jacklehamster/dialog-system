@@ -1,41 +1,42 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { PopupControlListener } from "./PopupControlListener";
 import { useDialogContext } from "../context/Provider";
 
 export enum LockStatus {
-  LOCKED,
   UNLOCKED,
+  LOCKED,
 }
 
 interface Props {
   uid?: string;
   listener: PopupControlListener;
+  disabled?: boolean;
 }
 
 export function useControlsLock({ uid, listener }: Props) {
-  //  const { popupControl, addControlsLock, removeControlsLock, topPopupUid } = useDialogContext();
-  // const [locked, setLocked] = useState(false);
+  const { popupControl, controlsLock, setControlsLock, removeControlsLock } = useDialogContext();
 
-  // const lockState = topPopupUid === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
+  const lockState = controlsLock === uid ? LockStatus.UNLOCKED : LockStatus.LOCKED;
 
-  // useEffect((): (() => void) | void => {
-  //   if (lockState) {
-  //     setLocked(true);
-  //     popupControl.addListener(listener);
-  //     return () => {
-  //       popupControl.removeListener(listener);
-  //       setLocked(false);
-  //     };
-  //   }
-  // }, [listener, setLocked, popupControl, lockState]);
+  useEffect((): (() => void) | void => {
+    if (lockState === LockStatus.UNLOCKED) {
+      popupControl.addListener(listener);
+      return () => {
+        popupControl.removeListener(listener);
+      };
+    }
+  }, [listener, popupControl, lockState]);
 
-  // useEffect(() => {
-  //   if (uid && locked) {
-  //     addControlsLock(uid);
-  //     return () => removeControlsLock(uid);
-  //   }
-  // }, [addControlsLock, removeControlsLock, locked, uid]);
+  useEffect(() => {
+    if (uid && lockState === LockStatus.LOCKED) {
+      setControlsLock(uid);
+    }
+  }, [popupControl, lockState, uid, setControlsLock]);
 
-  const lockState = LockStatus.LOCKED;
-  return { lockState };
+  useEffect(() => {
+    if (uid) {
+      return () => removeControlsLock(uid);
+    }
+  }, [setControlsLock, uid]);
+  return { lockState, popupControl };
 }

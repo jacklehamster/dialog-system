@@ -1,8 +1,5 @@
-import { Layout } from "./Layout";
-
-export interface Style {
-  fontSize?: number;
-}
+import { Layout } from "./layout/Layout";
+import { Style } from "./Style";
 
 export interface PopupModel {
   uid?: string;

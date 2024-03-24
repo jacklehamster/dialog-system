@@ -1,5 +1,6 @@
+import { UI } from "../actions/ConversionRegistry";
 import { PopActionConvertor } from "../actions/PopActionConvertor";
-import { MenuModel } from "../model/MenuModel";
+import { MenuModel } from "../menu/model/MenuModel";
 import { PopActionFunction } from "../model/PopAction";
 
 export interface OpenMenuModel {
@@ -7,7 +8,10 @@ export interface OpenMenuModel {
 }
 
 export class OpenMenuConvertor implements PopActionConvertor<OpenMenuModel> {
+  constructor(readonly ui: UI) {
+  }
+
   convert(model: OpenMenuModel): PopActionFunction {
-    return (ui) => ui.menu.open(model.menu);
+    return async () => this.ui.openMenu(model.menu);
   }
 }

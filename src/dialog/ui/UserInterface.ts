@@ -1,5 +1,5 @@
-import { PopAction } from "../model/PopAction";
+import { ActionScript } from "../model/ActionScript";
 
 export interface UserInterface {
-  performActions(actions: PopAction | (PopAction | undefined)[]): void;
+  performActions(actions: ActionScript): Promise<void>;
 }

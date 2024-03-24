@@ -2,20 +2,11 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
-import React, { CSSProperties, useEffect, useState } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 import './css/Popup.css';
-import { Layout } from '../model/Layout';
 import { usePopupLayout } from '../layout/usePopupLayout';
 import { useUniquePopupOnLayout } from '../layout/useUniquePopupOnLayout';
-
-interface Props {
-  popUid?: string;
-  children: React.ReactNode;
-  layout: Layout;
-  fontSize: number | undefined;
-  disabled?: boolean;
-  hidden?: boolean;
-}
+import { ElemProps } from '../ElemProps';
 
 //  Hack until I get proper CSS to work
 const OVERLAP: CSSProperties = {
@@ -47,14 +38,13 @@ const DEFAULT_FONT_SIZE = 24;
 export function Popup({
   children,
   layout,
-  fontSize,
+  style,
   disabled,
-  hidden,
-}: Props) {
+}: ElemProps): JSX.Element {
   const [h, setH] = useState(0);
   useEffect(() => {
-    requestAnimationFrame(() => setH(hidden ? 10 : 100));
-  }, [setH, hidden]);
+    requestAnimationFrame(() => setH(100));
+  }, [setH]);
 
   const { top, left, right, bottom, width, height } = usePopupLayout({
     layout,
@@ -63,12 +53,12 @@ export function Popup({
   const { visible } = useUniquePopupOnLayout({ layout, disabled });
 
 
-  return !hidden && (
+  return (
     <div
       style={{
-        position: 'absolute',
+        ...OVERLAP,
         left, top, right, bottom, width, height,
-        fontSize: fontSize ?? DEFAULT_FONT_SIZE,
+        fontSize: style?.fontSize ?? DEFAULT_FONT_SIZE,
         display: !visible ? "none": "",
       }}
     >

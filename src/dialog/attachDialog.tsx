@@ -1,9 +1,10 @@
 import ReactDOM from 'react-dom/client';
 import { DEFAULT_REGISTRY } from "./registry/DefaultRegistry";
-import { DialogManager } from "./dialog/DialogManager";
+import { SessionManager } from "./session/SessionManager";
 import { UserInterface } from "./ui/UserInterface";
 import { Model } from './model/Model';
 import { PopupControl } from './controls/PopupControl';
+import { ActionExecutor } from './ui/ActionExecutor';
 
 
 interface AttachDialogResults {
@@ -22,7 +23,7 @@ const STYLE: React.CSSProperties = {
 export function attachDialog(
   root: HTMLElement,
   config: { disableTap?: boolean } = {},
-  registry: Record<string, (data: Model, ui: UserInterface, onDone: () => void) => JSX.Element> = DEFAULT_REGISTRY): AttachDialogResults
+  registry: Record<string, (data: Model, onClose: () => void) => JSX.Element> = DEFAULT_REGISTRY): AttachDialogResults
 {
   const { offsetLeft: left, offsetTop: top } = root;
   const rootElem = document.createElement('div');
@@ -31,14 +32,12 @@ export function attachDialog(
     ...STYLE, top, left,
     pointerEvents: config.disableTap ? 'none' : undefined,
   };
-  const ui: UserInterface = {
-    performActions() {},
-  };
+  const executor = new ActionExecutor();
   const popupControl = new PopupControl();
   const dom = <div style={style}>
-    <DialogManager ui={ui} registry={registry} />
+    <SessionManager executor={executor} elemRegistry={registry} popupControl={popupControl} />
   </div>;
   reactRoot.render(dom);
   root.appendChild(rootElem);
-  return { ui, popupControl, detach: () => reactRoot.unmount() };
+  return { ui: executor, popupControl, detach: () => reactRoot.unmount() };
 }

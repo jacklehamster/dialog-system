@@ -1,6 +1,6 @@
 import { DialogModel } from "./DialogModel";
-import { Layout } from "./Layout";
-import { MenuModel } from "./MenuModel";
+import { Layout } from "../common/layout/Layout";
+import { MenuModel } from "../menu/model/MenuModel";
 
 export interface PopStep {
   dialog?: DialogModel;

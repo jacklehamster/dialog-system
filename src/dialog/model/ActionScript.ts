@@ -1,11 +1,9 @@
+import { PopActionModel } from "../actions/PopActionModel";
+import { DialogState } from "../common/DialogState";
 import { PopAction } from "./PopAction";
 
-export interface ActionScriptModel {
+export interface ActionScriptModel extends DialogState, PopActionModel {
   actions: PopAction[];
-  state?: {
-    uid: string;
-    index: number;
-  };
 }
 
-export type ActionScript = PopAction | PopAction[] | ActionScriptModel;
+export type ActionScript = PopAction | PopAction[];

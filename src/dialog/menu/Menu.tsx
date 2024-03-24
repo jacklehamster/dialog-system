@@ -1,26 +1,30 @@
-import { map } from 'abstract-list';
-import { CSSProperties } from 'react';
-import { UserInterface } from '../ui/UserInterface';
-import { MenuData } from '../..';
+import { List, map } from 'abstract-list';
 import { useMenu } from './useMenu';
-import { Popup } from '../popup/Popup';
+import { ElemProps } from '../common/ElemProps';
+import { MenuItem } from '@/popup/menu/MenuItem';
+import { Layout } from '../common/layout/Layout';
+import { Style } from '../common/Style';
+import { Popup } from '../common/popup/Popup';
 
-interface Props {
-  menuData: MenuData;
-  ui: UserInterface;
+export interface Props {
+  Elem?(props: ElemProps): JSX.Element
+  uid?: string;
+  items?: List<MenuItem>;
+  maxRows?: number;
+  style?: Style;
+  layout?: Layout;
+  onSelect(item: MenuItem): void;
 }
 
-export function Menu({ menuData, ui }: Props): JSX.Element {
-  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, hidden, onMenuAction } = useMenu({ menuData, ui });
-  const layout = menuData?.layout ?? {};
+export function Menu({ Elem = Popup, uid, items = [], maxRows, style, layout, onSelect }: Props): JSX.Element {
+  const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, menuHoverEnabled, enableMenuHover, onMenuAction } = useMenu({ uid, items, maxRows, onSelect });
 
   return (
-    <Popup
-      popUid={menuData.uid!}
-      layout={layout}
-      fontSize={menuData.style?.fontSize}
+    <Elem
+      uid={uid!}
+      layout={layout ?? {}}
+      style={style}
       disabled={disabled}
-      hidden={hidden}
     >
       <svg xmlns="http://www.w3.org/2000/svg" style={{
           position: "absolute",
@@ -30,9 +34,7 @@ export function Menu({ menuData, ui }: Props): JSX.Element {
           display: scroll > 0 ? "" : "none",
           left: `calc(50% - 100px)`,
         }} onMouseDown={() => scrollUp()}>
-        <polygon points="100,10 110,20 90,20" style={{
-          fill: "white",
-        }}/>
+        <polygon points="100,10 110,20 90,20" style={{ fill: "white" }}/>
       </svg>
       <div style={{ 
         paddingTop: 10,
@@ -40,13 +42,12 @@ export function Menu({ menuData, ui }: Props): JSX.Element {
       }}>
         <div style={{ height: `calc(100% - 27px)`, overflow: "hidden" }}>
           <div style={{ marginTop: scroll * -31, transition: "margin-top .2s" }}>
-            {map(menuData.items, (item, index) => {
-              const style: CSSProperties = {
-                color: selectedItem === item ? 'black' : disabled ? 'whitesmoke' : 'white',
-                backgroundColor: selectedItem !== item ? 'black' : disabled ? 'whitesmoke' : 'white',
-              };
+            {map(items, (item, index) => {
               return (
-                <div key={index} style={style}
+                <div key={index} style={{
+                    color: selectedItem === item ? 'black' : disabled ? 'whitesmoke' : 'white',
+                    backgroundColor: selectedItem !== item ? 'black' : disabled ? 'whitesmoke' : 'white',
+                  }}
                   onMouseMove={() => {
                     enableMenuHover();
                     select(index);
@@ -65,13 +66,11 @@ export function Menu({ menuData, ui }: Props): JSX.Element {
           height: 20,
           width: 200,
           marginTop: -5,
-          display: scroll + (menuData.maxRows ?? menuData.items.length.valueOf()) < menuData.items.length.valueOf() ? "" : "none",
+          display: scroll + (maxRows ?? items.length.valueOf()) < items.length.valueOf() ? "" : "none",
           left: `calc(50% - 100px)`,
         }} onMouseDown={() => scrollDown()}>
-        <polygon points="100,20 110,10 90,10" style={{
-          fill: "white",
-        }}/>
+        <polygon points="100,20 110,10 90,10" style={{ fill: "white" }}/>
       </svg>
-    </Popup>
+    </Elem>
   );
 }
