@@ -4898,18 +4898,40 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
   const { editing } = useEditContext();
   const [textProgressing, setTextProgressing] = import_react31.useState(true);
   const [subdialog, setSubDialog] = import_react31.useState();
+  const [actionInProgress, setActionInProgress] = import_react31.useState();
+  const [waitingForAction, setWaitingForAction] = import_react31.useState(false);
+  const nextMessage = import_react31.useCallback(() => {
+    if (waitingForAction) {
+      return;
+    }
+    if (actionInProgress) {
+      setWaitingForAction(true);
+      actionInProgress.then(next2);
+    } else {
+      next2();
+    }
+  }, [next2, actionInProgress, setWaitingForAction, waitingForAction]);
   const { lockState, popupControl } = useControls({
     active,
     listener: import_react31.useMemo(() => ({
-      onAction: textProgressing ? undefined : next2,
-      onBack: !dialog.backEnabled || textProgressing ? undefined : next2
-    }), [next2, dialog, textProgressing])
+      onAction: textProgressing ? undefined : nextMessage,
+      onBack: !dialog.backEnabled || textProgressing ? undefined : nextMessage
+    }), [nextMessage, dialog, textProgressing])
   });
   const { editable, editMessage, insertMessage, deleteMessage, messages } = useEditDialog({ dialog, active });
   const message = import_react31.useMemo(() => {
     const message2 = messages.at(index);
     return typeof message2 == "string" ? { text: message2 } : message2;
   }, [index, messages]);
+  import_react31.useEffect(() => {
+    setWaitingForAction(false);
+  }, [message, setWaitingForAction]);
+  import_react31.useEffect(() => {
+    setActionInProgress(message?.action?.());
+  }, [message, setActionInProgress]);
+  import_react31.useEffect(() => {
+    actionInProgress?.then(() => setActionInProgress(undefined));
+  }, [actionInProgress, setActionInProgress]);
   import_react31.useEffect(() => {
     setTextProgressing(true);
     const timeout = setTimeout(() => {
@@ -4930,8 +4952,8 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
   }, [messages, index, remove, onClose]);
   const onCloseMenu = import_react31.useCallback(async () => {
     setMenu(undefined);
-    next2();
-  }, [setMenu, next2]);
+    nextMessage();
+  }, [setMenu, nextMessage]);
   const [editDialogOn, setEditDialogOn] = import_react31.useState(false);
   useKeyDown({
     enabled: import_react31.useMemo(() => editable && active && !dialog.builtIn, [active, dialog]),
@@ -5004,7 +5026,7 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
           },
           onClick: () => popupControl.onAction(),
           children: [
-            jsx_dev_runtime16.jsxDEV("div", {
+            !waitingForAction && jsx_dev_runtime16.jsxDEV("div", {
               style: { flex: 1 },
               children: jsx_dev_runtime16.jsxDEV("progressive-text", {
                 period: `${PERIOD}`,
