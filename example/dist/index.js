@@ -2830,9 +2830,10 @@ var useMenu = function({ items, maxRows, onSelect, onBack, active }) {
       return;
     }
     if (typeof item === "object" && item.action) {
-      item.action();
+      item.action().then(() => onSelect(item));
+    } else {
+      onSelect(item);
     }
-    onSelect(item);
   }, [onSelect]);
   const onMenuAction = import_react2.useCallback((index) => {
     onItemAction(items.at(index));
