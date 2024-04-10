@@ -4898,19 +4898,19 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
   const { editing } = useEditContext();
   const [textProgressing, setTextProgressing] = import_react31.useState(true);
   const [subdialog, setSubDialog] = import_react31.useState();
-  const [actionInProgress, setActionInProgress] = import_react31.useState();
+  const [actionPromise, setActionPromise] = import_react31.useState();
   const [waitingForAction, setWaitingForAction] = import_react31.useState(false);
   const nextMessage = import_react31.useCallback(() => {
     if (waitingForAction) {
       return;
     }
-    if (actionInProgress) {
+    if (actionPromise) {
       setWaitingForAction(true);
-      actionInProgress.then(next2);
+      actionPromise.then(next2);
     } else {
       next2();
     }
-  }, [next2, actionInProgress, setWaitingForAction, waitingForAction]);
+  }, [next2, actionPromise, setWaitingForAction, waitingForAction]);
   const { lockState, popupControl } = useControls({
     active,
     listener: import_react31.useMemo(() => ({
@@ -4927,11 +4927,19 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
     setWaitingForAction(false);
   }, [message, setWaitingForAction]);
   import_react31.useEffect(() => {
-    setActionInProgress(message?.action?.());
-  }, [message, setActionInProgress]);
+    setActionPromise(message?.action?.());
+  }, [message, setActionPromise]);
   import_react31.useEffect(() => {
-    actionInProgress?.then(() => setActionInProgress(undefined));
-  }, [actionInProgress, setActionInProgress]);
+    actionPromise?.then(() => setActionPromise(undefined));
+  }, [actionPromise, setActionPromise]);
+  import_react31.useEffect(() => {
+    if (message?.autoNext !== undefined && !waitingForAction) {
+      const timeout = setTimeout(nextMessage, message.autoNext);
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [message, nextMessage, waitingForAction]);
   import_react31.useEffect(() => {
     setTextProgressing(true);
     const timeout = setTimeout(() => {
