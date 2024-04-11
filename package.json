@@ -34,7 +34,7 @@
     "build": "bun i && bun run fix-package-name && rm -rf *.tsbuildinfo && rm -rf dist/*.* && bun run bundler/bundler.ts && bun run test && bun run build:declaration",
     "build:declaration": "tsc --emitDeclarationOnly --project tsconfig.types.json",
     "build:example": "cd example && bun i && bun run build && cd ..",
-    "example": "cd example && bun start && cd ..",
+    "example": "cd example && bun i && bun start && cd ..",
     "fix-package-name": "npm explore package-name-fixer -- bun start \"$(pwd)\"",
     "auto-publish": "npm explore @dobuki/auto-publish -- bun run auto-publish \"$(pwd)\""
   },
@@ -66,7 +66,7 @@
   },
   "dependencies": {
     "abstract-list": "^1.0.15",
-    "dokui-menu": "^1.0.40",
+    "dokui-menu": "^1.0.41",
     "uuid": "^9.0.1"
   }
 }

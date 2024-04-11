@@ -4951,7 +4951,7 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
   }, [actionPromise, setActionPromise]);
   import_react31.useEffect(() => {
     if (message) {
-      if ((message.autoNext !== undefined || message.text === undefined) && !waitingForAction) {
+      if (message.autoNext !== undefined && !waitingForAction) {
         const timeout = setTimeout(nextMessage, message.autoNext);
         return () => {
           clearTimeout(timeout);
@@ -5037,7 +5037,7 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
   const { visible, setVisible } = useHideMessage({ message });
   return jsx_dev_runtime16.jsxDEV(jsx_dev_runtime16.Fragment, {
     children: [
-      !message?.hideDialog && jsx_dev_runtime16.jsxDEV(Popup2, {
+      message?.text && jsx_dev_runtime16.jsxDEV(Popup2, {
         layout: dialog.layout ?? {},
         style: dialog.style,
         disabled: lockState === LockStatus.LOCKED,
@@ -27577,7 +27577,6 @@ var ICON_STYLE = {
 };
 
 class KeyboardControl {
-  keyMapping;
   onKeyUp;
   onKeyDown;
   constructor(popupControl, keyMapping = {
@@ -27593,7 +27592,6 @@ class KeyboardControl {
     Escape: PopupControl.BACK,
     Enter: PopupControl.START
   }) {
-    this.keyMapping = keyMapping;
     let isKeyDown = false;
     this.onKeyUp = () => {
       isKeyDown = false;
