@@ -5037,7 +5037,7 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
   const { visible, setVisible } = useHideMessage({ message });
   return jsx_dev_runtime16.jsxDEV(jsx_dev_runtime16.Fragment, {
     children: [
-      !message?.hideDialog && jsx_dev_runtime16.jsxDEV(Popup2, {
+      !message?.hideDialog && message?.text && jsx_dev_runtime16.jsxDEV(Popup2, {
         layout: dialog.layout ?? {},
         style: dialog.style,
         disabled: lockState === LockStatus.LOCKED,
