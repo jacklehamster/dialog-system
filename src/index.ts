@@ -1,3 +1,3 @@
-import { openMenu, KeyboardControl } from "dokui-menu";
+import { openMenu, KeyboardControl, PopupControl } from "dokui-menu";
 
-export { openMenu, KeyboardControl };
+export { openMenu, KeyboardControl, PopupControl };

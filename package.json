@@ -66,7 +66,7 @@
   },
   "dependencies": {
     "abstract-list": "^1.0.15",
-    "dokui-menu": "^1.0.39",
+    "dokui-menu": "^1.0.40",
     "uuid": "^9.0.1"
   }
 }
