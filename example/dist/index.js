@@ -2735,6 +2735,7 @@ var jsx_dev_runtime15 = __toESM(require_jsx_dev_runtime(), 1);
 var import_react31 = __toESM(require_react(), 1);
 var import_react32 = __toESM(require_react(), 1);
 var import_react33 = __toESM(require_react(), 1);
+var import_react34 = __toESM(require_react(), 1);
 var jsx_dev_runtime16 = __toESM(require_jsx_dev_runtime(), 1);
 var useSelection = function({ items, maxRows = items.length.valueOf() }) {
   const [selectedIndex, setSelectedIndex] = import_react3.useState(0);
@@ -2896,7 +2897,7 @@ var useInitLayoutContext = function() {
   }), [getLayout, uniqueLayout]);
   return context;
 };
-var usePopupLayout = function({ layout }) {
+var usePopupLayout = function({ layout, setVisible }) {
   const { getLayout, uniqueLayout } = useLayoutContext();
   const layoutModel = getLayout(layout);
   const x3 = layoutModel.position?.[0] || DEFAULT_HORIZONTAL_PADDING;
@@ -2907,14 +2908,13 @@ var usePopupLayout = function({ layout }) {
   const bottom = DEFAULT_VERTICAL_PADDING;
   const width = layoutModel.size?.[0] || undefined;
   const height = layoutModel.size?.[1] || undefined;
-  const [visible, setVisible] = import_react10.useState(true);
   import_react10.useEffect(() => {
     const uid = typeof layout === "string" ? layout : layout.name;
     if (uid) {
       return uniqueLayout.registerLayout(uid, setVisible);
     }
   }, [setVisible, uniqueLayout]);
-  return { left, top, right, bottom, width, height, visible };
+  return { left, top, right, bottom, width, height };
 };
 var Popup2 = function({
   children,
@@ -2926,14 +2926,18 @@ var Popup2 = function({
   fit,
   zIndex,
   clickThrough,
-  leaveBorderUnchanged
+  leaveBorderUnchanged,
+  setVisible,
+  visible
 }) {
   const [h, setH] = import_react9.useState(0);
   import_react9.useEffect(() => {
     requestAnimationFrame(() => setH(100));
   }, [setH]);
-  const { top, left, right, bottom, width, height, visible } = usePopupLayout({
-    layout
+  const [localVisible, setLocalVisible] = import_react9.useState(true);
+  const { top, left, right, bottom, width, height } = usePopupLayout({
+    layout,
+    setVisible: setVisible ?? setLocalVisible
   });
   return jsx_dev_runtime3.jsxDEV("div", {
     style: {
@@ -2967,7 +2971,7 @@ var Popup2 = function({
           width,
           height: fit ? 0 : height,
           fontSize: style?.fontSize ?? DEFAULT_FONT_SIZE,
-          display: visible ? "" : "none"
+          display: visible ?? localVisible ? "" : "none"
         },
         children: jsx_dev_runtime3.jsxDEV("div", {
           className: "pop-up",
@@ -4890,6 +4894,19 @@ var useEditDialog = function({ dialog, active }) {
     deleteMessage
   };
 };
+var useHideMessage = function({ message }) {
+  const [visible, setVisible] = import_react34.useState(true);
+  const [messageHidden, setMessageHidden] = import_react34.useState(false);
+  import_react34.useEffect(() => {
+    if (!visible) {
+      setMessageHidden(true);
+    }
+  }, [visible, setMessageHidden]);
+  import_react34.useEffect(() => {
+    setMessageHidden(false);
+  }, [message, setMessageHidden]);
+  return { visible: visible && !messageHidden, setVisible };
+};
 var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
   const { next: next2, index } = useDialogState();
   const [menu, setMenu] = import_react31.useState();
@@ -5015,6 +5032,7 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
     ]
   }), [message, index, popupControl, editMessage, insertMessage, deleteMessage]);
   const pictures = import_react31.useMemo(() => [...B(dialog.pictures ?? [], (p3) => p3), ...B(message?.pictures ?? [], (p3) => p3)].filter((p3) => !!p3), [dialog, message]);
+  const { visible, setVisible } = useHideMessage({ message });
   return jsx_dev_runtime16.jsxDEV(jsx_dev_runtime16.Fragment, {
     children: [
       !message?.hideDialog && jsx_dev_runtime16.jsxDEV(Popup2, {
@@ -5025,6 +5043,8 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
         onBack: dialog.backEnabled ? next2 : undefined,
         clickThrough: focusLess,
         leaveBorderUnchanged: true,
+        visible,
+        setVisible,
         children: jsx_dev_runtime16.jsxDEV("div", {
           style: {
             width: "100%",
