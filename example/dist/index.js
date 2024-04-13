@@ -4287,10 +4287,9 @@ var Container2 = function({
   }, [menu, dialog, prompt2, onSelect, onNext]);
   import_react14.useEffect(() => {
     if (elems.length && index >= elems.length) {
-      setIndex(0);
       onClose();
     }
-  }, [index, setIndex, elems, onClose]);
+  }, [index, elems, onClose]);
   return jsx_dev_runtime13.jsxDEV(jsx_dev_runtime13.Fragment, {
     children: [
       elems[index],
@@ -4715,7 +4714,7 @@ var Menu2 = function({
   onClose
 }) {
   const { removed, remove } = useRemove();
-  const [sub, setSub] = import_react8.useState({});
+  const [sub, setSub] = import_react8.useState();
   const [postClose, setPostClose] = import_react8.useState();
   const [hidden, setHidden] = import_react8.useState(false);
   const onBack = import_react8.useCallback((force) => {
@@ -4737,7 +4736,7 @@ var Menu2 = function({
         setPostClose(rest);
       } else {
         setPostClose(undefined);
-        setSub({});
+        setSub(undefined);
         onSelect(item);
         if (item.back) {
           onBack(true);
@@ -4749,7 +4748,7 @@ var Menu2 = function({
   }, [onSelect, setSub, onBack, setPostClose, setHidden]);
   const { scroll, scrollUp, scrollDown, selectedItem, select, disabled, mouseHoverEnabled, enableMouseHover, onMenuAction } = useMenu({ items, maxRows, onSelect: executeMenuItem, onBack, active });
   const onCloseSub = import_react8.useCallback(async () => {
-    setSub({});
+    setSub(undefined);
     if (postClose) {
       executeMenuItem(postClose);
     }
@@ -4837,7 +4836,7 @@ var Menu2 = function({
           }, undefined, false, undefined, this)
         ]
       }, undefined, true, undefined, this),
-      jsx_dev_runtime15.jsxDEV(Container2, {
+      sub && jsx_dev_runtime15.jsxDEV(Container2, {
         menu: sub.menu,
         dialog: sub.dialog,
         prompt: sub.prompt,
@@ -4972,11 +4971,12 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
     setPrompt(message?.prompt);
   }, [message, setMenu, setPrompt, setSubDialog]);
   const { removed, remove } = useRemove();
+  const { visible, setVisible } = useHideMessage({ message });
   import_react31.useEffect(() => {
-    if (index >= messages.length.valueOf()) {
+    if (index >= messages.length.valueOf() && visible) {
       remove(onClose);
     }
-  }, [messages, index, remove, onClose]);
+  }, [messages, index, remove, onClose, visible]);
   const onCloseMenu = import_react31.useCallback(async () => {
     setMenu(undefined);
     nextMessage();
@@ -5034,69 +5034,70 @@ var Dialog = function({ dialog, onSelect, onClose, onPrompt, focusLess }) {
     ]
   }), [message, index, popupControl, editMessage, insertMessage, deleteMessage]);
   const pictures = import_react31.useMemo(() => [...B(dialog.pictures ?? [], (p3) => p3), ...B(message?.pictures ?? [], (p3) => p3)].filter((p3) => !!p3), [dialog, message]);
-  const { visible, setVisible } = useHideMessage({ message });
   return jsx_dev_runtime16.jsxDEV(jsx_dev_runtime16.Fragment, {
-    children: [
-      message?.text && jsx_dev_runtime16.jsxDEV(Popup2, {
-        layout: dialog.layout ?? {},
-        style: dialog.style,
-        disabled: lockState === LockStatus.LOCKED,
-        removed,
-        onBack: dialog.backEnabled ? next2 : undefined,
-        clickThrough: focusLess,
-        leaveBorderUnchanged: true,
-        visible,
-        setVisible,
-        children: jsx_dev_runtime16.jsxDEV("div", {
-          style: {
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            padding: 10
-          },
-          onClick: () => popupControl.onAction(),
-          children: [
-            !waitingForAction && jsx_dev_runtime16.jsxDEV("div", {
-              style: { flex: 1 },
-              children: jsx_dev_runtime16.jsxDEV("progressive-text", {
-                period: `${PERIOD}`,
-                children: message?.text
+    children: message?.text && jsx_dev_runtime16.jsxDEV(jsx_dev_runtime16.Fragment, {
+      children: [
+        jsx_dev_runtime16.jsxDEV(Popup2, {
+          layout: dialog.layout ?? {},
+          style: dialog.style,
+          disabled: lockState === LockStatus.LOCKED,
+          removed,
+          onBack: dialog.backEnabled ? next2 : undefined,
+          clickThrough: focusLess,
+          leaveBorderUnchanged: true,
+          visible,
+          setVisible,
+          children: jsx_dev_runtime16.jsxDEV("div", {
+            style: {
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              padding: 10
+            },
+            onClick: () => popupControl.onAction(),
+            children: [
+              !waitingForAction && jsx_dev_runtime16.jsxDEV("div", {
+                style: { flex: 1 },
+                children: jsx_dev_runtime16.jsxDEV("progressive-text", {
+                  period: `${PERIOD}`,
+                  children: message?.text
+                }, undefined, false, undefined, this)
+              }, undefined, false, undefined, this),
+              editing && active && jsx_dev_runtime16.jsxDEV("div", {
+                style: {
+                  textAlign: "center",
+                  backgroundColor: "blue",
+                  borderRadius: "50%",
+                  width: "30px",
+                  height: "30px",
+                  color: "white"
+                },
+                children: "E"
               }, undefined, false, undefined, this)
-            }, undefined, false, undefined, this),
-            editing && active && jsx_dev_runtime16.jsxDEV("div", {
-              style: {
-                textAlign: "center",
-                backgroundColor: "blue",
-                borderRadius: "50%",
-                width: "30px",
-                height: "30px",
-                color: "white"
-              },
-              children: "E"
-            }, undefined, false, undefined, this)
-          ]
-        }, undefined, true, undefined, this)
-      }, undefined, false, undefined, this),
-      subdialog && jsx_dev_runtime16.jsxDEV(Container2, {
-        dialog: subdialog,
-        focusLess: true,
-        removed
-      }, undefined, false, undefined, this),
-      jsx_dev_runtime16.jsxDEV(Container2, {
-        pictures,
-        menu: !textProgressing ? menu : undefined,
-        prompt: !textProgressing ? prompt2 : undefined,
-        onSelect,
-        onClose: onCloseMenu,
-        onPrompt,
-        removed
-      }, undefined, false, undefined, this),
-      editDialogOn && jsx_dev_runtime16.jsxDEV(Container2, {
-        menu: editMenu,
-        onClose: () => setEditDialogOn(false)
-      }, undefined, false, undefined, this)
-    ]
-  }, undefined, true, undefined, this);
+            ]
+          }, undefined, true, undefined, this)
+        }, undefined, false, undefined, this),
+        subdialog && jsx_dev_runtime16.jsxDEV(Container2, {
+          dialog: subdialog,
+          focusLess: true,
+          removed
+        }, undefined, false, undefined, this),
+        jsx_dev_runtime16.jsxDEV(Container2, {
+          pictures,
+          menu: !textProgressing ? menu : undefined,
+          prompt: !textProgressing ? prompt2 : undefined,
+          onSelect,
+          onClose: onCloseMenu,
+          onPrompt,
+          removed
+        }, undefined, false, undefined, this),
+        editDialogOn && jsx_dev_runtime16.jsxDEV(Container2, {
+          menu: editMenu,
+          onClose: () => setEditDialogOn(false)
+        }, undefined, false, undefined, this)
+      ]
+    }, undefined, true, undefined, this)
+  }, undefined, false, undefined, this);
 };
 var __create2 = Object.create;
 var __defProp2 = Object.defineProperty;
