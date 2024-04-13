@@ -2883,7 +2883,7 @@ var useInitLayoutContext = function() {
   const layoutModels = import_react12.useMemo(() => ({}), []);
   const getLayout = import_react12.useCallback((layout) => {
     if (typeof layout === "string") {
-      return layoutModels[layout] ?? {};
+      return layoutModels[layout] ?? undefined;
     }
     if (layout.name) {
       layoutModels[layout.name] = layout;
@@ -2900,21 +2900,21 @@ var useInitLayoutContext = function() {
 var usePopupLayout = function({ layout, setVisible }) {
   const { getLayout, uniqueLayout } = useLayoutContext();
   const layoutModel = getLayout(layout);
-  const x3 = layoutModel.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
-  const y = layoutModel.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
-  const left = layoutModel.positionFromRight ? `calc(100% - ${x3}px)` : x3;
-  const top = layoutModel.positionFromBottom ? `calc(100% - ${y}px)` : y;
+  const x3 = layoutModel?.position?.[0] ?? DEFAULT_HORIZONTAL_PADDING;
+  const y = layoutModel?.position?.[1] ?? DEFAULT_VERTICAL_PADDING;
+  const left = layoutModel?.positionFromRight ? `calc(100% - ${x3}px)` : x3;
+  const top = layoutModel?.positionFromBottom ? `calc(100% - ${y}px)` : y;
   const right = DEFAULT_HORIZONTAL_PADDING;
   const bottom = DEFAULT_VERTICAL_PADDING;
-  const width = layoutModel.size?.[0] || undefined;
-  const height = layoutModel.size?.[1] || undefined;
+  const width = layoutModel?.size?.[0] || undefined;
+  const height = layoutModel?.size?.[1] || undefined;
   import_react10.useEffect(() => {
     const uid = typeof layout === "string" ? layout : layout.name;
     if (uid) {
       return uniqueLayout.registerLayout(uid, setVisible);
     }
   }, [setVisible, uniqueLayout]);
-  return { left, top, right, bottom, width, height };
+  return { left, top, right, bottom, width, height, valid: !!layoutModel };
 };
 var Popup2 = function({
   children,
@@ -2935,7 +2935,7 @@ var Popup2 = function({
     requestAnimationFrame(() => setH(100));
   }, [setH]);
   const [localVisible, setLocalVisible] = import_react9.useState(true);
-  const { top, left, right, bottom, width, height } = usePopupLayout({
+  const { top, left, right, bottom, width, height, valid } = usePopupLayout({
     layout,
     setVisible: setVisible ?? setLocalVisible
   });
@@ -2971,7 +2971,7 @@ var Popup2 = function({
           width,
           height: fit ? 0 : height,
           fontSize: style?.fontSize ?? DEFAULT_FONT_SIZE,
-          display: visible ?? localVisible ? "" : "none"
+          display: valid && (visible ?? localVisible) ? "" : "none"
         },
         children: jsx_dev_runtime3.jsxDEV("div", {
           className: "pop-up",
@@ -26704,7 +26704,7 @@ var LockStatus;
   LockStatus2[LockStatus2["LOCKED"] = 1] = "LOCKED";
 })(LockStatus || (LockStatus = {}));
 var DEFAULT_GAME_CONTEXT = {
-  getLayout: (layout) => typeof layout === "object" ? layout : {},
+  getLayout: (layout) => typeof layout === "object" ? layout : undefined,
   uniqueLayout: new x2
 };
 var Context2 = import_react11.default.createContext(DEFAULT_GAME_CONTEXT);
